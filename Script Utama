@@ -17,11 +17,11 @@ end
 --===========================--
 
 local Scripts = {
-    {Name = "Mount Beaja", URL = "https://gist.githubusercontent.com/ozaghazali/607ad4cb1f52f06ce23870caa00333fa/raw/5d6e2e37227558fa847ca58cc61a8334fd374043/Mount_Beaja.lua"},
-    {Name = "Mount Maaf", URL = "https://gist.githubusercontent.com/ozaghazali/1d0bb0c06230f8e8aa1334c4b0b6d6bd/raw/32fc02815d093c0ac86a9d23206d41d41b00b9f8/Mount_Maaf.lua"},
-    {Name = "Mount Yahayuk", URL = "https://gist.githubusercontent.com/ozaghazali/fad988ee078c0cbe009da183f473b375/raw/d8d96bcb5a859b4d73538f4cc4a5da057d5be3e5/Mount_Yahayuk.lua"},
-    {Name = "Mount Kota", URL = "https://gist.githubusercontent.com/ozaghazali/f52f71e1a12ffc72dcf846c7045e6a52/raw/9a8fe398083bf7feaaa46f93c70669d8fa1fec74/Mount_Kota.lua"},
-    {Name = "Mount Mika", URL = "https://gist.githubusercontent.com/ozaghazali/bfa09acdd036dacccb5921a025c0e7f1/raw/cbd498f0ba62ea2a2ccbd78445bb5ae8745871c9/Mount_Mika.lua"},
+    {Name = "Mount Maaf", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%201"},
+    {Name = "Mount Beaja", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%202"},
+    {Name = "Mount Mika", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%203"},
+    {Name = "Mount Kota", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%204"},
+    {Name = "Mount Yahayuk", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%205"},
 	{Name = "Script 6", URL = "URL_SCRIPT_6"},
 	{Name = "Script 7", URL = "URL_SCRIPT_7"},
 	{Name = "Script 8", URL = "URL_SCRIPT_8"},
