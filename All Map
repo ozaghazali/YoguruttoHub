@@ -1,5 +1,5 @@
 return function(loaderGuiToDestroy)
-  --========================--
+	--========================--
 	-- [PEMBERSIHAN] OTOMATIS --
 	--========================--
 	if _G.YoguruttoTeleportScriptHandle and typeof(_G.YoguruttoTeleportScriptHandle.cleanup) == "function" then
@@ -176,7 +176,7 @@ return function(loaderGuiToDestroy)
 	local TitleLabel = Instance.new("TextLabel")
 	TitleLabel.Size = UDim2.new(1, 0, 1, 0)
 	TitleLabel.BackgroundTransparency = 1
-	TitleLabel.Text = "- Mount Mika -"
+	TitleLabel.Text = "- Khusus All Map -"
 	TitleLabel.Font = Enum.Font.GothamBold
 	TitleLabel.TextColor3 = Color3.new(1, 1, 1)
 	TitleLabel.TextSize = 16
@@ -198,9 +198,25 @@ return function(loaderGuiToDestroy)
 	ContentLayout.Padding = UDim.new(0, 10)
 	ContentLayout.Parent = ContentContainer
 
+	-- [MODIFIKASI 2 KOLOM] Kolom Kiri ditambahkan
+	local LeftColumn = Instance.new("Frame")
+	LeftColumn.Name = "LeftColumn"
+	LeftColumn.Size = UDim2.new(0.5, -5, 1, 0) -- Setengah lebar, dikurangi 5px untuk padding
+	LeftColumn.BackgroundTransparency = 1
+	LeftColumn.LayoutOrder = 1 -- Agar muncul di kiri
+	LeftColumn.Parent = ContentContainer
+
+	local LeftColumnLayout = Instance.new("UIListLayout")
+	LeftColumnLayout.Padding = UDim.new(0, 8)
+	LeftColumnLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	LeftColumnLayout.Parent = LeftColumn
+
+	-- [MODIFIKASI 2 KOLOM] Kolom Kanan disesuaikan
 	local RightColumn = Instance.new("Frame")
-	RightColumn.Size = UDim2.new(1, 0, 1, 0)
+	RightColumn.Name = "RightColumn"
+	RightColumn.Size = UDim2.new(0.5, -5, 1, 0) -- Setengah lebar
 	RightColumn.BackgroundTransparency = 1
+	RightColumn.LayoutOrder = 2 -- Agar muncul di kanan
 	RightColumn.Parent = ContentContainer
 
 	local RightColumnLayout = Instance.new("UIListLayout")
@@ -228,14 +244,14 @@ return function(loaderGuiToDestroy)
 	PlayerTeleportTitle.TextSize = 14
 	PlayerTeleportTitle.TextColor3 = Color3.new(0.9, 0.9, 0.9)
 	PlayerTeleportTitle.TextYAlignment = Enum.TextYAlignment.Bottom
-	PlayerTeleportTitle.Parent = RightColumn
+	PlayerTeleportTitle.Parent = LeftColumn
 	PlayerTeleportTitle.LayoutOrder = 1
 
 	local SearchRefreshContainer = Instance.new("Frame")
 	SearchRefreshContainer.Size = UDim2.new(1, 0, 0, 30)
 	SearchRefreshContainer.BackgroundTransparency = 1
 	SearchRefreshContainer.LayoutOrder = 2
-	SearchRefreshContainer.Parent = RightColumn
+	SearchRefreshContainer.Parent = LeftColumn -- [MODIFIKASI 2 KOLOM]
 
 	local SearchRefreshLayout = Instance.new("UIListLayout")
 	SearchRefreshLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -274,14 +290,14 @@ return function(loaderGuiToDestroy)
 	RefreshBtnCorner.Parent = RefreshPlayersButton
 
 	local PlayerScrollFrame = Instance.new("ScrollingFrame")
-	-- [MODIFIKASI] Ukuran disesuaikan untuk slider gravitasi
-	PlayerScrollFrame.Size = UDim2.new(1, 0, 1, -281) 
+	-- [MODIFIKASI 2 KOLOM] Ukuran disesuaikan untuk layout 2 kolom
+	PlayerScrollFrame.Size = UDim2.new(1, 0, 1, -66) 
 	PlayerScrollFrame.BackgroundColor3 = Color3.fromRGB(45, 47, 50)
 	PlayerScrollFrame.BorderSizePixel = 0
 	PlayerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 	PlayerScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(150, 150, 150)
 	PlayerScrollFrame.ScrollBarThickness = 6
-	PlayerScrollFrame.Parent = RightColumn
+	PlayerScrollFrame.Parent = LeftColumn -- [MODIFIKASI 2 KOLOM]
 	PlayerScrollFrame.LayoutOrder = 3
 
 	local PlayerScrollCorner = UICorner:Clone()
@@ -292,6 +308,17 @@ return function(loaderGuiToDestroy)
 	PlayerListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	PlayerListLayout.Parent = PlayerScrollFrame
 
+	local FiturLainnyaTitle = Instance.new("TextLabel")
+	FiturLainnyaTitle.Size = UDim2.new(1, 0, 0, 20)
+	FiturLainnyaTitle.BackgroundTransparency = 1
+	FiturLainnyaTitle.Font = Enum.Font.GothamBold
+	FiturLainnyaTitle.Text = "Fitur Lainnya"
+	FiturLainnyaTitle.TextSize = 14
+	FiturLainnyaTitle.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+	FiturLainnyaTitle.TextYAlignment = Enum.TextYAlignment.Bottom
+	FiturLainnyaTitle.Parent = RightColumn
+	FiturLainnyaTitle.LayoutOrder = 1
+	
 	local WalkspeedSliderContainer = Instance.new("Frame")
 	WalkspeedSliderContainer.Size = UDim2.new(1, 0, 0, 35)
 	WalkspeedSliderContainer.BackgroundTransparency = 1
