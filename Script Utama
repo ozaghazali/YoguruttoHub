@@ -22,7 +22,7 @@ local Scripts = {
     {Name = "Mount Mika", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%203"},
     {Name = "Mount Kota", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%204"},
     {Name = "Mount Yahayuk", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%205"},
-	{Name = "Script 6", URL = "URL_SCRIPT_6"},
+	{Name = "Mount Gemi", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%206"},
 	{Name = "Script 7", URL = "URL_SCRIPT_7"},
 	{Name = "Script 8", URL = "URL_SCRIPT_8"},
 	{Name = "Script 9", URL = "URL_SCRIPT_9"}
