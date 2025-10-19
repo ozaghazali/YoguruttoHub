@@ -17,7 +17,7 @@ end
 --===========================--
 
 local Scripts = {
-    "1"{Name = "Mount Maaf", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%201"},
+    {Name = "Mount Maaf", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%201"},
     {Name = "Mount Beaja", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%202"},
     {Name = "Mount Mika", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%203"},
     {Name = "Mount Kota", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%204"},
