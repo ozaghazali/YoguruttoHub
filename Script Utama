@@ -17,11 +17,11 @@ end
 --===========================--
 
 local Scripts = {
-    {Name = "Mount Maaf", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%201"},
-    {Name = "Mount Beaja", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%202"},
-    {Name = "Mount Mika", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%203"},
-    {Name = "Mount Kota", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%204"},
-    {Name = "Mount Yahayuk", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%205"},
+    {Name = "Mount Beaja", URL = "https://gist.githubusercontent.com/ozaghazali/607ad4cb1f52f06ce23870caa00333fa/raw/f7ddbf440337444fa58df9c639dccfb1dece982e/Mount_Beaja.lua"},
+    {Name = "Mount Maaf", URL = "https://gist.githubusercontent.com/ozaghazali/1d0bb0c06230f8e8aa1334c4b0b6d6bd/raw/adba2e2cd0e290da9e695c9aea8e7968a1e58dba/Mount_Maaf.lua"},
+    {Name = "Mount Yahayuk", URL = "https://gist.githubusercontent.com/ozaghazali/fad988ee078c0cbe009da183f473b375/raw/786b2d9bdd291f876a345f6ca86cad3628ef667c/Mount_Yahayuk.lua"},
+    {Name = "Mount Kota", URL = "https://gist.githubusercontent.com/ozaghazali/f52f71e1a12ffc72dcf846c7045e6a52/raw/d4b6b19f8d8e0e1f240b19741d0cb7aa9f55f7c0/Mount_Kota.lua"},
+    {Name = "Script 5", URL = "URL_SCRIPT_5"},
 	{Name = "Script 6", URL = "URL_SCRIPT_6"},
 	{Name = "Script 7", URL = "URL_SCRIPT_7"},
 	{Name = "Script 8", URL = "URL_SCRIPT_8"},
@@ -74,8 +74,8 @@ end
 local C_Background = Color3.fromRGB(30, 32, 35)
 local C_Button = Color3.fromRGB(50, 54, 60)
 local C_Button_Hover = Color3.fromRGB(70, 74, 80)
-local C_Button_Unload = Color3.fromRGB(220, 50, 50)
-local C_Button_Unload_Hover = Color3.fromRGB(240, 70, 70)
+local C_Button_AllMap = Color3.fromRGB(225, 50, 50)
+local C_Button_AllMap_Hover = Color3.fromRGB(240, 70, 70)
 local C_Text = Color3.fromRGB(240, 240, 240)
 local C_Stroke = Color3.fromRGB(80, 80, 80) -- Warna awal (akan ditimpa)
 
@@ -96,7 +96,7 @@ ScreenGui.ResetOnSpawn = false
 -- MainFrame: Latar belakang utama (LANDSCAPE)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 400, 0, 210) -- Tinggi 210px
+MainFrame.Size = UDim2.new(0, 400, 0, 260) -- [LANDSCAPE] 400px x 260px
 MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 MainFrame.BackgroundColor3 = C_Background
@@ -109,12 +109,12 @@ MainCorner.CornerRadius = UDim.new(0, 8)
 MainCorner.Parent = MainFrame
 
 -- ===================================================================
---                  MODIFIKASI OUTLINE RGB
+--                  MODIFIKASI OUTLINE RGB DIMULAI DI SINI
 -- ===================================================================
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Color = C_Stroke
-MainStroke.Thickness = 2 
-MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+MainStroke.Thickness = 2 -- Diubah dari 1
+MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border -- Ditambahkan
 MainStroke.Parent = MainFrame
 
 -- (Opsional) Efek RGB bergradasi pada outline
@@ -133,7 +133,7 @@ local HeaderFrame = Instance.new("Frame")
 HeaderFrame.Name = "HeaderFrame"
 HeaderFrame.Size = UDim2.new(1, -20, 0, 35)
 HeaderFrame.Position = UDim2.new(0, 10, 0, 10)
-HeaderFrame.BackgroundColor3 = C_Button_Unload
+HeaderFrame.BackgroundColor3 = C_Button_AllMap
 HeaderFrame.BackgroundTransparency = 0
 HeaderFrame.BorderSizePixel = 0
 HeaderFrame.Parent = MainFrame
@@ -157,7 +157,7 @@ TitleLabel.Parent = HeaderFrame
 local ContentScroller = Instance.new("ScrollingFrame")
 ContentScroller.Name = "ContentScroller"
 ContentScroller.Position = UDim2.new(0, 0, 0, 50)
-ContentScroller.Size = UDim2.new(1, 0, 0, 160) -- (50 + 160 = 210)
+ContentScroller.Size = UDim2.new(1, 0, 0, 160)
 ContentScroller.BackgroundTransparency = 1
 ContentScroller.BorderSizePixel = 0
 ContentScroller.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -167,7 +167,7 @@ ContentScroller.Parent = MainFrame
 
 -- Padding untuk Scroller (Jarak 10px dari tepi)
 local ScrollerPadding = Instance.new("UIPadding")
-ScrollerPadding.PaddingTop = UDim.new(0, 7)
+ScrollerPadding.PaddingTop = UDim.new(0, 10)
 ScrollerPadding.PaddingBottom = UDim.new(0, 20)
 ScrollerPadding.PaddingLeft = UDim.new(0, 10)
 ScrollerPadding.PaddingRight = UDim.new(0, 10)
@@ -206,45 +206,101 @@ for _, scriptData in ipairs(Scripts) do
 end
 
 -- ===================================================================
---                     TAMBAHKAN BARIS INI
+-- in 
 -- ===================================================================
 -- [PERBAIKAN BARU] Atur CanvasSize agar menyertakan Padding Bawah (10px)
 ContentScroller.CanvasSize = UDim2.new(0, 0, 0, ButtonGridLayout.AbsoluteContentSize.Y + ScrollerPadding.PaddingBottom.Offset)
 -- ===================================================================
 
 
--- [MODIFIKASI] Bagian FooterFrame dan UnloadButton telah dihapus seluruhnya
+-- FooterFrame: Wadah untuk tombol Unload
+local FooterFrame = Instance.new("Frame")
+FooterFrame.Name = "FooterFrame"
+FooterFrame.Size = UDim2.new(1, 0, 0, 50)
+FooterFrame.Position = UDim2.new(0, 0, 0, 210) -- 260 - 50 = 210
+FooterFrame.AnchorPoint = Vector2.new(0, 0)
+FooterFrame.BackgroundTransparency = 1
+FooterFrame.Parent = MainFrame
 
+-- Padding untuk Footer (Jarak tombol Unload dari tepi)
+local FooterPadding = Instance.new("UIPadding")
+FooterPadding.PaddingTop = UDim.new(0, 5)
+FooterPadding.PaddingBottom = UDim.new(0, 10)
+FooterPadding.PaddingLeft = UDim.new(0, 10) -- [PERBAIKAN 1] Typo 'UDim.n' diperbaiki
+FooterPadding.PaddingRight = UDim.new(0, 10)
+FooterPadding.Parent = FooterFrame
+
+-- Tombol Unload
+local AllMapButton = Instance.new("TextButton")
+AllMapButton.Name = "AllMapButton"
+AllMapButton.Size = UDim2.new(1, 0, 1, 0)
+AllMapButton.BackgroundColor3 = C_Button_AllMap
+AllMapButton.Text = "Khusus All Map"
+AllMapButton.Font = Enum.Font.GothamBold
+AllMapButton.TextSize = 16
+AllMapButton.TextColor3 = C_Text
+AllMapButton.Parent = FooterFrame
+
+local unloadCorner = Instance.new("UICorner")
+unloadCorner.CornerRadius = UDim.new(0, 6)
+unloadCorner.Parent = AllMapButton
+
+ApplyHoverEffect(AllMapButton, C_Button_AllMap, C_Button_AllMap_Hover)
+
+AllMapButton.MouseButton1Click:Connect(function()
+    -- GANTI NAMA DAN URL SKRIP TUJUAN ANDA DI SINI:
+    loadScript("All Map", "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/All%20Map")
+end)
 
 --===========================--
---       LOGIKA DRAG (SMOOTH) --
+--       LOGIKA DRAG         --
 --===========================--
 local dragging = false
 local dragStart = Vector2.new(0, 0)
 local startPos = UDim2.new(0, 0, 0, 0)
 
--- 1. Saat mouse DITEKAN di atas header
+local dragConnection = nil
+local endConnection = nil
+
 HeaderFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
         startPos = MainFrame.Position
+
+        -- [FIX] Gunakan UserInputService.InputChanged agar mouse tetap terlacak
+        -- walaupun kursor keluar dari HeaderFrame saat di-drag cepat.
+        dragConnection = UserInputService.InputChanged:Connect(function(moveInput)
+            if dragging and (moveInput.UserInputType == Enum.UserInputType.MouseMovement or moveInput.UserInputType == Enum.UserInputType.Touch) then
+                local delta = moveInput.Position - dragStart
+                -- Update posisi GUI
+                MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            end
+        end)
+
+        -- [FIX] Gunakan UserInputService.InputEnded untuk mendeteksi kapan drag berhenti
+        endConnection = UserInputService.InputEnded:Connect(function(endInput)
+            if endInput.UserInputType == Enum.UserInputType.MouseButton1 or endInput.UserInputType == Enum.UserInputType.Touch then
+                dragging = false
+
+                -- [FIX] Putuskan koneksi (disconnect) agar tidak menumpuk listener
+                if dragConnection then
+                    dragConnection:Disconnect()
+                    dragConnection = nil
+                end
+                if endConnection then
+                    endConnection:Disconnect()
+                    endConnection = nil
+                end
+            end
+        end)
     end
 end)
 
--- 2. Saat mouse BERGERAK (di mana saja di layar)
-UserInputService.InputChanged:Connect(function(input)
-    -- Cek apakah kita sedang dragging DAN inputnya adalah gerakan mouse/touch
+HeaderFrame.InputChanged:Connect(function(input)
     if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local delta = input.Position - dragStart
         MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-
--- 3. Saat mouse DILEPAS (di mana saja di layar)
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
     end
 end)
 
