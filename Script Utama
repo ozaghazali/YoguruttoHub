@@ -17,15 +17,15 @@ end
 --===========================--
 
 local Scripts = {
-    [1]{Name = "Mount Maaf", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%201"},
-    [2]{Name = "Mount Beaja", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%202"},
-    [3]{Name = "Mount Mika", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%203"},
-    [4]{Name = "Mount Kota", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%204"},
-    [5]{Name = "Mount Yahayuk", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%205"},
-	[6]{Name = "Script 6", URL = "URL_SCRIPT_6"},
-	[7]{Name = "Script 7", URL = "URL_SCRIPT_7"},
-	[8]{Name = "Script 8", URL = "URL_SCRIPT_8"},
-	[9]{Name = "Script 9", URL = "URL_SCRIPT_9"}
+    "1"{Name = "Mount Maaf", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%201"},
+    {Name = "Mount Beaja", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%202"},
+    {Name = "Mount Mika", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%203"},
+    {Name = "Mount Kota", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%204"},
+    {Name = "Mount Yahayuk", URL = "https://raw.githubusercontent.com/ozaghazali/YoguruttoHub/refs/heads/main/Script%205"},
+	{Name = "Script 6", URL = "URL_SCRIPT_6"},
+	{Name = "Script 7", URL = "URL_SCRIPT_7"},
+	{Name = "Script 8", URL = "URL_SCRIPT_8"},
+	{Name = "Script 9", URL = "URL_SCRIPT_9"}
     -- Tambahkan skrip lain di sini
 }
 
