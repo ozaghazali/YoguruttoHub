@@ -201,66 +201,64 @@ return function(loaderGuiToDestroy)
 		end
 	end
 
-	local function startTeleportLoop()
+local function startTeleportLoop()
 		while autoTeleportEnabled do
 			local character = player.Character or player.CharacterAdded:Wait()
 			local humanoid = character:WaitForChild("Humanoid")
 			
+			-- Tunggu jika karakter belum siap atau sedang respawn
 			if not character.Parent or humanoid.Health <= 0 then
 				print("Karakter belum siap, menunggu respawn...")
 				player.CharacterAdded:Wait()
-				task.wait(1)
+				task.wait(1) -- Beri waktu sejenak setelah respawn
 				continue
 			end
 
+			-- Hentikan loop jika auto teleport dimatikan
 			if not autoTeleportEnabled then break end
 
-			currentTeleportIndex = currentTeleportIndex + 1
-
-			if currentTeleportIndex > #teleportLocations then
-				currentTeleportIndex = 0
-				
-				if godModeConnection then
-					godModeConnection:Disconnect()
-					godModeConnection = nil
-				end
-
-				if character.Parent and humanoid.Health > 0 then
-					print("Siklus teleport selesai. Memicu respawn...")
-					humanoid.Health = 0
-				end
-
-				print("Menunggu respawn untuk siklus baru...")
-				player.CharacterAdded:Wait()
-				task.wait(1)
-				continue
-			end
+			-- [PERUBAHAN LOGIKA]
+			-- Selalu targetkan lokasi terakhir (indeks ke-#teleportLocations)
+			local targetIndex = #teleportLocations 
 			
 			activateGodMode(humanoid)
 			
-			local location = teleportLocations[currentTeleportIndex]
-			print(string.format("Auto Teleport: Melanjutkan ke Lokasi %d", currentTeleportIndex))
+			local location = teleportLocations[targetIndex]
+			print(string.format("Auto Teleport: Melompat ke Lokasi %d (Terakhir)", targetIndex))
 			
 			teleportCharacter(character, location)
-			task.wait(teleportDelay)
+			task.wait(teleportDelay) -- Tunggu sesuai delay yang diatur slider
 			
+			-- Hentikan jika dimatikan selama delay
 			if not autoTeleportEnabled then
-				break
-			end
-			
-			if not character.Parent or humanoid.Health <= 0 then
-				print("Karakter mati di tengah siklus. Mereset dan menunggu respawn...")
-				currentTeleportIndex = 0
-				
 				if godModeConnection then
 					godModeConnection:Disconnect()
 					godModeConnection = nil
 				end
-
-				player.CharacterAdded:Wait()
-				task.wait(1)
-				continue
+				break
 			end
+			
+			-- [PERUBAHAN LOGIKA]
+			-- Setelah teleport dan delay, langsung picu respawn
+			
+			-- Matikan godmode sebelum respawn
+			if godModeConnection then
+				godModeConnection:Disconnect()
+				godModeConnection = nil
+			end
+
+			-- Picu respawn jika karakter masih hidup
+			if character.Parent and humanoid.Health > 0 then
+				print(string.format("Teleport ke Lokasi %d selesai. Memicu respawn...", targetIndex))
+				humanoid.Health = 0
+			end
+
+			-- Tunggu respawn selesai untuk memulai siklus baru
+			print("Menunggu respawn untuk siklus baru...")
+			player.CharacterAdded:Wait()
+			task.wait(1) -- Beri waktu sejenak setelah respawn
+			
+			-- Loop akan otomatis berlanjut ke iterasi berikutnya
 		end
 	end
 	
