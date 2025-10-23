@@ -35,6 +35,11 @@ return function(loaderGuiToDestroy)
 	local MAX_GRAVITY = 500
 	local DEFAULT_GRAVITY = 196.2 -- Standar Roblox
 
+	-- [MODIFIKASI ESP] Konfigurasi ESP
+	local ESP_FRIEND_COLOR = Color3.fromRGB(0, 0, 255) --
+	local ESP_ENEMY_COLOR = Color3.fromRGB(255, 0, 0) --
+	local ESP_USE_TEAM_COLOR = true --
+
 	--================--
 	--      STATE       --
 	--================--
@@ -54,6 +59,10 @@ return function(loaderGuiToDestroy)
 	local isSpectating = false
 	local spectateTarget = nil
 	local spectateCharacterAddedConn = nil
+
+	-- [MODIFIKASI ESP] State ESP
+	local espEnabled = false
+	local espConnection = nil
 
 	--================--
 	--   FUNCTIONS    --
@@ -114,6 +123,150 @@ return function(loaderGuiToDestroy)
 		spectateCharacterAddedConn = targetPlayer.CharacterAdded:Connect(setSubject)
 		
 		table.insert(connections, spectateCharacterAddedConn)
+	end
+
+	-- [MODIFIKASI ESP] Holder & Template untuk Nama
+	local espHolder = Instance.new("Folder", game:GetService("CoreGui")) --
+	espHolder.Name = "Yogurutto_ESP_Holder"
+	
+	local espNameTagTemplate = Instance.new("BillboardGui") --
+	espNameTagTemplate.Name = "ESP_NameTag"
+	espNameTagTemplate.Enabled = true
+	espNameTagTemplate.Size = UDim2.new(0, 200, 0, 50) --
+	espNameTagTemplate.AlwaysOnTop = true --
+	espNameTagTemplate.StudsOffset = Vector3.new(0, 2.5, 0) -- Penyesuaian dari
+	
+	local espTagLabel = Instance.new("TextLabel", espNameTagTemplate) --
+	espTagLabel.Name = "Tag"
+	espTagLabel.BackgroundTransparency = 1 --
+	espTagLabel.Size = UDim2.new(1, 0, 1, 0) -- Penyesuaian dari
+	espTagLabel.TextSize = 16 -- Penyesuaian dari
+	espTagLabel.TextColor3 = Color3.new(1, 1, 1) --
+	espTagLabel.TextStrokeColor3 = Color3.new(0, 0, 0) --
+	espTagLabel.TextStrokeTransparency = 0.4 --
+	espTagLabel.Text = "PlayerName"
+	espTagLabel.Font = Enum.Font.SourceSansBold --
+	
+	-- [MODIFIKASI ESP] Fungsi Inti ESP (Digabungkan)
+	
+	local removeESP -- <-- [PERBAIKAN 1] Deklarasi awal agar updateESP bisa memanggilnya
+	
+	local function updateESP(target, color)
+		if target.Character and target.Character:FindFirstChild("Head") and target.Character:FindFirstChildOfClass("Humanoid") then
+			local head = target.Character.Head
+			local humanoid = target.Character:FindFirstChildOfClass("Humanoid")
+
+			-- 0. Sembunyikan nama default Roblox (seperti di ESP.lua)
+			humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+
+			-- 1. Update Highlight
+			local highlight = target.Character:FindFirstChild("Yogurutto_ESP_Highlight") 
+			if not highlight then
+				highlight = Instance.new("Highlight") 
+				highlight.RobloxLocked = true
+				highlight.Name = "Yogurutto_ESP_Highlight"
+				highlight.Adornee = target.Character
+				highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop --
+				highlight.OutlineTransparency = 1 
+				highlight.Parent = target.Character
+			end
+			highlight.FillColor = color --
+
+			-- 2. Update NameTag (BillboardGui)
+			local nameTag = espHolder:FindFirstChild(target.Name .. "_NameTag")
+			if not nameTag then
+				nameTag = espNameTagTemplate:Clone()
+				nameTag.Name = target.Name .. "_NameTag"
+				nameTag.Adornee = head --
+				nameTag.Parent = espHolder
+			end
+			
+			if nameTag.Adornee ~= head then -- Jika karakter respawn
+			    nameTag.Adornee = head
+			end
+			
+			local tagLabel = nameTag:FindFirstChild("Tag")
+			if tagLabel then
+			    tagLabel.Text = target.DisplayName -- Menampilkan nama
+			    tagLabel.TextColor3 = color -- Menyesuaikan warna
+			end
+		else
+			-- Jika karakter tidak ada, hapus ESP
+			removeESP(target) --
+		end
+	end
+
+	removeESP = function(target) -- <-- [PERBAIKAN 2] Hapus 'local'
+		-- 1. Hapus Highlight
+		if target.Character then
+			local highlight = target.Character:FindFirstChild("Yogurutto_ESP_Highlight")
+			if highlight then
+				highlight:Destroy()
+			end
+
+			-- 2. Kembalikan nama default Roblox
+			local humanoid = target.Character:FindFirstChildOfClass("Humanoid")
+			if humanoid then
+				humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
+			end
+		end
+
+		-- 3. Hapus NameTag
+		local nameTag = espHolder:FindFirstChild(target.Name .. "_NameTag")
+		if nameTag then
+			nameTag:Destroy()
+		end
+	end
+
+	local stopESP -- Deklarasi awal agar bisa dipanggil oleh toggleESP
+	
+	local function startESP()
+		if espEnabled then return end
+		espEnabled = true
+		
+		stopSpectating() 
+		
+		espConnection = RunService.Heartbeat:Connect(function() --
+			local allPlayers = Players:GetPlayers()
+			local activeESPPlayers = {}
+
+			for _, v in ipairs(allPlayers) do
+				if v ~= player then
+					local color = ESP_USE_TEAM_COLOR and v.TeamColor.Color or ((player.TeamColor == v.TeamColor) and ESP_FRIEND_COLOR or ESP_ENEMY_COLOR) --
+					updateESP(v, color) 
+					activeESPPlayers[v.Name] = true
+				else
+					removeESP(v) -- Selalu hapus ESP dari diri sendiri
+				end
+			end
+
+			-- Cleanup untuk GUI pemain yang keluar
+			for _, child in ipairs(espHolder:GetChildren()) do
+				if child:IsA("BillboardGui") then
+					local playerName = string.gsub(child.Name, "_NameTag", "")
+					if not activeESPPlayers[playerName] then
+						child:Destroy()
+					end
+				end
+			end
+		end)
+		
+		table.insert(connections, espConnection) 
+	end
+
+	stopESP = function()
+		if not espEnabled then return end
+		espEnabled = false
+		
+		if espConnection then
+			espConnection:Disconnect()
+			espConnection = nil
+		end
+		
+		-- Hapus semua ESP yang tersisa
+		for _, v in ipairs(Players:GetPlayers()) do
+			removeESP(v) 
+		end
 	end
 
 	--================--
@@ -455,6 +608,21 @@ return function(loaderGuiToDestroy)
 	local CommandsBtnCorner = UICorner:Clone()
 	CommandsBtnCorner.Parent = CommandsButton
 
+	-- [MODIFIKASI ESP] Tombol ESP
+	local ESPButton = Instance.new("TextButton")
+	ESPButton.Name = "ESPButton"
+	ESPButton.Size = UDim2.new(1, 0, 0, 35)
+	ESPButton.BackgroundColor3 = Color3.fromRGB(200, 60, 60) -- Merah (Mati)
+	ESPButton.Text = "ESP: OFF"
+	ESPButton.Font = Enum.Font.GothamBold
+	ESPButton.TextSize = 16
+	ESPButton.TextColor3 = Color3.new(1, 1, 1)
+	ESPButton.Parent = RightColumn
+	ESPButton.LayoutOrder = 9 -- Urutan baru (setelah CommandsButton)
+	
+	local ESPBtnCorner = UICorner:Clone()
+	ESPBtnCorner.Parent = ESPButton
+
 	--================================--
 	-- LOGIC TELEPORT PEMAIN --
 	--================================--
@@ -689,6 +857,21 @@ return function(loaderGuiToDestroy)
 			loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
 		end)
 	end))
+
+	-- [MODIFIKASI ESP] Logic Tombol ESP
+	local function toggleESP()
+		if espEnabled then
+			stopESP()
+			ESPButton.Text = "ESP: OFF"
+			ESPButton.BackgroundColor3 = Color3.fromRGB(200, 60, 60) -- Merah
+		else
+			startESP()
+			ESPButton.Text = "ESP: ON"
+			ESPButton.BackgroundColor3 = Color3.fromRGB(60, 200, 60) -- Hijau
+		end
+	end
+	
+	table.insert(connections, ESPButton.MouseButton1Click:Connect(toggleESP))
 
 	table.insert(connections, RefreshPlayersButton.MouseButton1Click:Connect(function()
 		PlayerSearchBox.Text = ""
@@ -1012,6 +1195,8 @@ return function(loaderGuiToDestroy)
 		print("Membersihkan instance skrip teleport sebelumnya...")
 		
 		stopSpectating() 
+		stopESP() -- [MODIFIKASI ESP] Panggil fungsi stopESP
+		
 		if freecamEnabled then
 			self.freecamModule.ToggleFreecam()
 		end
@@ -1025,6 +1210,11 @@ return function(loaderGuiToDestroy)
 		
 		for _, conn in ipairs(self.connections) do
 			conn:Disconnect()
+		end
+
+		-- [MODIFIKASI ESP] Hapus holder GUI ESP
+		if espHolder and espHolder.Parent then
+			espHolder:Destroy()
 		end
 		
 		if self.gui and self.gui.Parent then
