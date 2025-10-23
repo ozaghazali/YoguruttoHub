@@ -36,12 +36,12 @@ return function(loaderGuiToDestroy)
 	local DEFAULT_GRAVITY = 196.2 -- Standar Roblox
 
 	-- [MODIFIKASI ESP] Konfigurasi ESP
-	local ESP_FRIEND_COLOR = Color3.fromRGB(0, 0, 255) --
-	local ESP_ENEMY_COLOR = Color3.fromRGB(255, 0, 0) --
-	local ESP_USE_TEAM_COLOR = true --
+	local ESP_FRIEND_COLOR = Color3.fromRGB(0, 0, 255)
+	local ESP_ENEMY_COLOR = Color3.fromRGB(255, 0, 0) 
+	local ESP_USE_TEAM_COLOR = true
 
 	--================--
-	--      STATE       --
+	--      STATE     --
 	--================--
 	
 	local freecamEnabled = false
@@ -64,11 +64,22 @@ return function(loaderGuiToDestroy)
 	local espEnabled = false
 	local espConnection = nil
 
+	-- [MODIFIKASI FLY] State untuk Fly
+	local flyEnabled = false
+	local flyKeyDown, flyKeyUp
+	local flyControl = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+	local fly_lControl = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+	local flySpeed = 1 -- Kecepatan dasar dari W/A/S/D
+	local flyBaseSpeed = 50 -- Pengali kecepatan
+
 	--================--
 	--   FUNCTIONS    --
 	--================--
 	
 	local stopSpectating
+	local stopFly -- Deklarasi awal untuk stopFly
+	local toggleFreecam -- Deklarasi awal untuk toggleFreecam
+	local toggleFly -- Deklarasi awal untuk toggleFly
 	
 	local function teleportCharacter(character, position)
 		if character and character:FindFirstChild("HumanoidRootPart") then
@@ -100,8 +111,9 @@ return function(loaderGuiToDestroy)
 			freecamEnabled = false
 			MainFrame.Visible = true
 		end
-		
-		stopSpectating() 
+
+		stopSpectating()
+		stopFly() -- [MODIFIKASI FLY] Matikan fly jika spectate
 
 		isSpectating = true
 		spectateTarget = targetPlayer
@@ -202,7 +214,7 @@ return function(loaderGuiToDestroy)
 			end
 			
 			if nameTag.Adornee ~= head then -- Jika karakter respawn
-			    nameTag.Adornee = head
+			   	nameTag.Adornee = head
 			end
 			
 			-- 3. Update Teks Nama
@@ -301,6 +313,149 @@ return function(loaderGuiToDestroy)
 			removeESP(v) 
 		end
 	end
+
+	-- [MODIFIKASI FLY] Penambahan Fungsi Fly dari Fly.lua
+	local function getFlyRoot(char)
+		return char:FindFirstChild("HumanoidRootPart")
+	end
+	
+	function startFly()
+		if flyEnabled then return end
+		
+		-- Matikan fitur yang konflik
+		stopSpectating()
+		if freecamEnabled then
+			toggleFreecam() -- Fungsi ini didefinisikan di bawah
+		end
+	
+		repeat task.wait() until player and player.Character and getFlyRoot(player.Character) and player.Character:FindFirstChildOfClass("Humanoid")
+		
+		if flyKeyDown or flyKeyUp then flyKeyDown:Disconnect() flyKeyUp:Disconnect() end
+	
+		local T = getFlyRoot(player.Character)
+		local CONTROL = flyControl -- Gunakan state variable
+		local lCONTROL = fly_lControl -- Gunakan state variable
+		local SPEED = 0
+		local flyspeed_config = flySpeed -- Gunakan state variable
+		local base_speed_config = flyBaseSpeed -- Gunakan state variable
+	
+		local function FLY()
+			flyEnabled = true
+			local BG = Instance.new("BodyGyro")
+			local BV = Instance.new("BodyVelocity")
+			BG.Name = "Yogurutto_FlyGyro"
+			BV.Name = "Yogurutto_FlyVelocity"
+			BG.P = 9e4
+			BG.Parent = T
+			BV.Parent = T
+			BG.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+			BG.cframe = T.CFrame
+			BV.velocity = Vector3.new(0, 0, 0)
+			BV.maxForce = Vector3.new(9e9, 9e9, 9e9)
+			task.spawn(function()
+				repeat task.wait()
+					if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+						player.Character:FindFirstChildOfClass("Humanoid").PlatformStand = true
+					end
+					if CONTROL.L + CONTROL.R ~= 0 or CONTROL.F + CONTROL.B ~= 0 or CONTROL.Q + CONTROL.E ~= 0 then
+						SPEED = base_speed_config
+					elseif not (CONTROL.L + CONTROL.R ~= 0 or CONTROL.F + CONTROL.B ~= 0 or CONTROL.Q + CONTROL.E ~= 0) and SPEED ~= 0 then
+						SPEED = 0
+					end
+					if (CONTROL.L + CONTROL.R) ~= 0 or (CONTROL.F + CONTROL.B) ~= 0 or (CONTROL.Q + CONTROL.E) ~= 0 then
+						BV.velocity = ((Workspace.CurrentCamera.CoordinateFrame.lookVector * (CONTROL.F + CONTROL.B)) + ((Workspace.CurrentCamera.CoordinateFrame * CFrame.new(CONTROL.L + CONTROL.R, (CONTROL.F + CONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - Workspace.CurrentCamera.CoordinateFrame.p)) * SPEED
+						lCONTROL = {F = CONTROL.F, B = CONTROL.B, L = CONTROL.L, R = CONTROL.R}
+					elseif (CONTROL.L + CONTROL.R) == 0 and (CONTROL.F + CONTROL.B) == 0 and (CONTROL.Q + CONTROL.E) == 0 and SPEED ~= 0 then
+						BV.velocity = ((Workspace.CurrentCamera.CoordinateFrame.lookVector * (lCONTROL.F + lCONTROL.B)) + ((Workspace.CurrentCamera.CoordinateFrame * CFrame.new(lCONTROL.L + lCONTROL.R, (lCONTROL.F + lCONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - Workspace.CurrentCamera.CoordinateFrame.p)) * SPEED
+					else
+						BV.velocity = Vector3.new(0, 0, 0)
+					end
+					BG.cframe = Workspace.CurrentCamera.CoordinateFrame
+				until not flyEnabled
+				
+				flyControl = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0} -- Reset state
+				fly_lControl = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0} -- Reset state
+				SPEED = 0
+				BG:Destroy()
+				BV:Destroy()
+				if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+					player.Character:FindFirstChildOfClass("Humanoid").PlatformStand = false
+				end
+			end)
+		end
+	
+		flyKeyDown = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+			if gameProcessed then return end -- Jangan fly jika sedang mengetik
+			if not flyEnabled then return end -- Jangan proses jika fly tidak aktif
+	
+			local KEY = input.KeyCode.Name:lower()
+			if KEY == "w" then
+				flyControl.F = flyspeed_config
+			elseif KEY == "s" then
+				flyControl.B = -flyspeed_config
+			elseif KEY == "a" then
+				flyControl.L = -flyspeed_config
+			elseif KEY == "d" then
+				flyControl.R = flyspeed_config
+			elseif KEY == "e" then -- QEfly di original true
+				flyControl.Q = flyspeed_config * 2
+			elseif KEY == "q" then
+				flyControl.E = -flyspeed_config * 2
+			end
+			pcall(function() Workspace.CurrentCamera.CameraType = Enum.CameraType.Track end)
+		end)
+	
+		flyKeyUp = UserInputService.InputEnded:Connect(function(input, gameProcessed)
+			local KEY = input.KeyCode.Name:lower()
+			if KEY == "w" then
+				flyControl.F = 0
+			elseif KEY == "s" then
+				flyControl.B = 0
+			elseif KEY == "a" then
+				flyControl.L = 0
+			elseif KEY == "d" then
+				flyControl.R = 0
+			elseif KEY == "e" then
+				flyControl.Q = 0
+			elseif KEY == "q" then
+				flyControl.E = 0
+			end
+		end)
+		
+		table.insert(connections, flyKeyDown) -- Tambahkan ke cleanup list
+		table.insert(connections, flyKeyUp) -- Tambahkan ke cleanup list
+	
+		FLY()
+	end
+	
+	stopFly = function()
+		if not flyEnabled then return end
+		flyEnabled = false
+		if flyKeyDown or flyKeyUp then 
+			flyKeyDown:Disconnect() 
+			flyKeyUp:Disconnect()
+			flyKeyDown = nil
+			flyKeyUp = nil
+		end
+		
+		-- Hapus manual BodyGyro/Velocity jika masih ada
+		if player.Character then
+			local root = getFlyRoot(player.Character)
+			if root then
+				local gyro = root:FindFirstChild("Yogurutto_FlyGyro")
+				local vel = root:FindFirstChild("Yogurutto_FlyVelocity")
+				if gyro then gyro:Destroy() end
+				if vel then vel:Destroy() end
+			end
+			if player.Character:FindFirstChildOfClass("Humanoid") then
+				player.Character:FindFirstChildOfClass("Humanoid").PlatformStand = false
+			end
+		end
+		
+		pcall(function() Workspace.CurrentCamera.CameraType = Enum.CameraType.Custom end)
+	end
+	-- [MODIFIKASI FLY] Akhir dari fungsi Fly
+	
 
 	--================--
 	--       GUI        --
@@ -656,6 +811,22 @@ return function(loaderGuiToDestroy)
 	local ESPBtnCorner = UICorner:Clone()
 	ESPBtnCorner.Parent = ESPButton
 
+	-- [MODIFIKASI FLY] Tombol Fly
+	local FlyButton = Instance.new("TextButton")
+	FlyButton.Name = "FlyButton"
+	FlyButton.Size = UDim2.new(1, 0, 0, 35)
+	FlyButton.BackgroundColor3 = Color3.fromRGB(200, 60, 60) -- Merah (Mati)
+	FlyButton.Text = "Fly: OFF"
+	FlyButton.Font = Enum.Font.GothamBold
+	FlyButton.TextSize = 16
+	FlyButton.TextColor3 = Color3.new(1, 1, 1)
+	FlyButton.Parent = RightColumn
+	FlyButton.LayoutOrder = 10 -- Urutan baru (setelah ESPButton)
+	
+	local FlyBtnCorner = UICorner:Clone()
+	FlyBtnCorner.Parent = FlyButton
+	-- [MODIFIKASI FLY] Akhir Tombol Fly
+
 	--================================--
 	-- LOGIC TELEPORT PEMAIN --
 	--================================--
@@ -825,7 +996,8 @@ return function(loaderGuiToDestroy)
 
 	table.insert(connections, WalkspeedSliderTrack.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			isDraggingWalkspeedSlider = true; isDraggingJumpSlider = false; isDraggingGravitySlider = false; updateWalkspeedSliderPosition(input.Position.X)
+			isDraggingWalkspeedSlider = true; isDraggingJumpSlider = false;
+			isDraggingGravitySlider = false; updateWalkspeedSliderPosition(input.Position.X)
 		end
 	end))
 	
@@ -905,6 +1077,28 @@ return function(loaderGuiToDestroy)
 	end
 	
 	table.insert(connections, ESPButton.MouseButton1Click:Connect(toggleESP))
+
+	-- [MODIFIKASI FLY] Logic Tombol Fly
+	toggleFly = function() -- Diubah agar bisa dipanggil oleh keybind
+		if flyEnabled then
+			stopFly()
+			FlyButton.Text = "Fly: OFF"
+			FlyButton.BackgroundColor3 = Color3.fromRGB(200, 60, 60) -- Merah
+		else
+			-- Cek konflik sebelum start
+			stopSpectating()
+			if freecamEnabled then
+				toggleFreecam() -- Fungsi ini ada di bawah, akan otomatis mematikan freecam
+			end
+			
+			startFly()
+			FlyButton.Text = "Fly: ON"
+			FlyButton.BackgroundColor3 = Color3.fromRGB(60, 200, 60) -- Hijau
+		end
+	end
+	
+	table.insert(connections, FlyButton.MouseButton1Click:Connect(toggleFly))
+	-- [MODIFIKASI FLY] Akhir Logic Tombol Fly
 
 	table.insert(connections, RefreshPlayersButton.MouseButton1Click:Connect(function()
 		PlayerSearchBox.Text = ""
@@ -1096,12 +1290,17 @@ return function(loaderGuiToDestroy)
 			local v96 = v_u_17.ViewportSize
 			local v97 = v_u_9(v_u_40 / 2) * 2
 			local v98 = v96.x / v96.y * v97
-			local v99 = p95.rightVector; local v100 = p95.upVector; local v101 = p95.lookVector
-			local v102 = Vector3.new(); local v103 = 512
+			local v99 = p95.rightVector;
+			local v100 = p95.upVector; 
+			local v101 = p95.lookVector
+			local v102 = Vector3.new();
+			local v103 = 512
 			for v104 = 0, 1, 0.5 do
 				for v105 = 0, 1, 0.5 do
-					local v106 = (v104 - 0.5) * v98; local v107 = (v105 - 0.5) * v97
-					local v108 = v99 * v106 - v100 * v107 + v101; local v109 = p95.p + v108 * 0.1
+					local v106 = (v104 - 0.5) * v98;
+					local v107 = (v105 - 0.5) * v97
+					local v108 = v99 * v106 - v100 * v107 + v101;
+					local v109 = p95.p + v108 * 0.1
 					local _, v110 = v_u_15:FindPartOnRay(Ray.new(v109, v108.unit * v103))
 					local v111 = (v110 - v109).magnitude
 					if v111 < v103 then v102 = v108.unit; v103 = v111 end
@@ -1110,7 +1309,8 @@ return function(loaderGuiToDestroy)
 			return v101:Dot(v102) * v103
 		end
 		local function v_u_119(p113)
-			local v114 = v_u_41:Update(p113, v_u_44.Vel(p113)); local v115 = v_u_42:Update(p113, v_u_44.Pan(p113)); local v116 = v_u_43:Update(p113, v_u_44.Fov(p113))
+			local v114 = v_u_41:Update(p113, v_u_44.Vel(p113)); local v115 = v_u_42:Update(p113, v_u_44.Pan(p113));
+			local v116 = v_u_43:Update(p113, v_u_44.Fov(p113))
 			local v117 = v_u_8(0.7002075382097097 / v_u_9((v_u_6(v_u_40 / 2))))
 			v_u_40 = v_u_4(v_u_40 + v116 * 300 * (p113 / v117), 1, 120)
 			v_u_39 = v_u_39 + v115 * v_u_20 * (p113 / v117)
@@ -1172,8 +1372,9 @@ return function(loaderGuiToDestroy)
 	-- INPUT & JUMP LOGIC         --
 	--================================--
 	
-	local function toggleFreecam()
+	toggleFreecam = function() -- [MODIFIKASI] Diubah dari local function
 		stopSpectating()
+		stopFly() -- [MODIFIKASI FLY] Matikan fly jika freecam
 		freecamEnabled = not freecamEnabled
 		FreecamModule.ToggleFreecam()
 		MainFrame.Visible = not freecamEnabled
@@ -1182,6 +1383,17 @@ return function(loaderGuiToDestroy)
 	table.insert(connections, UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
 		local isShiftPressed = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or UserInputService:IsKeyDown(Enum.KeyCode.RightShift)
 		
+		-- [MODIFIKASI FLY] Jangan proses input jika fly aktif dan *bukan* tombol GUI/Keybind
+		if flyEnabled then
+			if input.KeyCode == Enum.KeyCode.Home then
+				toggleGUIVisibility()
+			elseif input.KeyCode == Enum.KeyCode.V then -- [MODIFIKASI KEYBIND] Tambahkan V
+				toggleFly()
+			end
+			-- Input lain (W,A,S,D,Q,E) sudah ditangani oleh listener flyKeyDown
+			return
+		end
+		
 		if freecamEnabled then
 			if input.KeyCode == Enum.KeyCode.P and isShiftPressed then
 				toggleFreecam()
@@ -1189,12 +1401,15 @@ return function(loaderGuiToDestroy)
 			return
 		end
 		
-		if isSpectating and not (input.KeyCode == Enum.KeyCode.Home or (input.KeyCode == Enum.KeyCode.P and isShiftPressed)) then
+		-- [MODIFIKASI KEYBIND] Hapus V dari cek isSpectating agar V tetap bisa mematikan spectate
+		if isSpectating and not (input.KeyCode == Enum.KeyCode.Home or (input.KeyCode == Enum.KeyCode.P and isShiftPressed) or input.KeyCode == Enum.KeyCode.V) then
 			return
 		end
 		
 		if gameProcessedEvent then
-			if input.KeyCode == Enum.KeyCode.Home or (input.KeyCode == Enum.KeyCode.P and isShiftPressed) then
+			-- [MODIFIKASI KEYBIND] Tambahkan V ke pengecualian gameProcessedEvent
+			if input.KeyCode == Enum.KeyCode.Home or (input.KeyCode == Enum.KeyCode.P and isShiftPressed) or input.KeyCode == Enum.KeyCode.V then
+				-- Izinkan tombol-tombol ini lolos
 			else
 				return
 			end
@@ -1204,6 +1419,8 @@ return function(loaderGuiToDestroy)
 			toggleGUIVisibility()
 		elseif input.KeyCode == Enum.KeyCode.P and isShiftPressed then
 			toggleFreecam()
+		elseif input.KeyCode == Enum.KeyCode.V then -- [MODIFIKASI KEYBIND] Tambahkan V
+			toggleFly()
 		end
 	end))
 
@@ -1229,6 +1446,7 @@ return function(loaderGuiToDestroy)
 		
 		stopSpectating() 
 		stopESP() -- [MODIFIKASI ESP] Panggil fungsi stopESP
+		stopFly() -- [MODIFIKASI FLY] Panggil fungsi stopFly
 		
 		if freecamEnabled then
 			self.freecamModule.ToggleFreecam()
