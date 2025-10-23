@@ -125,22 +125,40 @@ return function(loaderGuiToDestroy)
 		table.insert(connections, spectateCharacterAddedConn)
 	end
 
-	-- [MODIFIKASI ESP] Holder & Template untuk Nama
+	-- [MODIFIKASI ESP] Holder & Template untuk Nama dan Jarak
 	local espHolder = Instance.new("Folder", game:GetService("CoreGui")) --
 	espHolder.Name = "Yogurutto_ESP_Holder"
 	
 	local espNameTagTemplate = Instance.new("BillboardGui") --
 	espNameTagTemplate.Name = "ESP_NameTag"
 	espNameTagTemplate.Enabled = true
-	espNameTagTemplate.Size = UDim2.new(0, 200, 0, 50) --
+	espNameTagTemplate.Size = UDim2.new(0, 200, 0, 60) -- [MODIFIKASI] Tinggi ditambah untuk jarak
 	espNameTagTemplate.AlwaysOnTop = true --
-	espNameTagTemplate.StudsOffset = Vector3.new(0, 2.5, 0) -- Penyesuaian dari
+	espNameTagTemplate.StudsOffset = Vector3.new(0, 3, 0) -- [MODIFIKASI] Dinaikkan sedikit
 	
+	-- [MODIFIKASI] Layout untuk menyusun Nama dan Jarak
+	local espListLayout = Instance.new("UIListLayout", espNameTagTemplate)
+	espListLayout.FillDirection = Enum.FillDirection.Vertical
+	espListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	espListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+	-- [MODIFIKASI] Label baru untuk Jarak
+	local espDistanceLabel = Instance.new("TextLabel", espNameTagTemplate)
+	espDistanceLabel.Name = "Distance"
+	espDistanceLabel.BackgroundTransparency = 1
+	espDistanceLabel.Size = UDim2.new(1, 0, 0, 20)
+	espDistanceLabel.TextSize = 16
+	espDistanceLabel.TextColor3 = Color3.new(1, 1, 1)
+	espDistanceLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+	espDistanceLabel.TextStrokeTransparency = 0.2
+	espDistanceLabel.Text = " 0 m "
+	espDistanceLabel.Font = Enum.Font.SourceSans
+
 	local espTagLabel = Instance.new("TextLabel", espNameTagTemplate) --
 	espTagLabel.Name = "Tag"
 	espTagLabel.BackgroundTransparency = 1 --
-	espTagLabel.Size = UDim2.new(1, 0, 1, 0) -- Penyesuaian dari
-	espTagLabel.TextSize = 16 -- Penyesuaian dari
+	espTagLabel.Size = UDim2.new(1, 0, 0, 20) -- [MODIFIKASI] Ukuran disesuaikan
+	espTagLabel.TextSize = 16 --
 	espTagLabel.TextColor3 = Color3.new(1, 1, 1) --
 	espTagLabel.TextStrokeColor3 = Color3.new(0, 0, 0) --
 	espTagLabel.TextStrokeTransparency = 0.4 --
@@ -149,9 +167,11 @@ return function(loaderGuiToDestroy)
 	
 	-- [MODIFIKASI ESP] Fungsi Inti ESP (Digabungkan)
 	
-	local removeESP -- <-- [PERBAIKAN 1] Deklarasi awal agar updateESP bisa memanggilnya
+	local removeESP -- [PERBAIKAN] Deklarasi awal
 	
 	local function updateESP(target, color)
+		local localPlayerHead = player.Character and player.Character:FindFirstChild("Head")
+		
 		if target.Character and target.Character:FindFirstChild("Head") and target.Character:FindFirstChildOfClass("Humanoid") then
 			local head = target.Character.Head
 			local humanoid = target.Character:FindFirstChildOfClass("Humanoid")
@@ -185,18 +205,31 @@ return function(loaderGuiToDestroy)
 			    nameTag.Adornee = head
 			end
 			
+			-- 3. Update Teks Nama
 			local tagLabel = nameTag:FindFirstChild("Tag")
 			if tagLabel then
 			    tagLabel.Text = target.DisplayName -- Menampilkan nama
 			    tagLabel.TextColor3 = color -- Menyesuaikan warna
 			end
+
+			-- 4. [MODIFIKASI] Update Teks Jarak
+			local distanceLabel = nameTag:FindFirstChild("Distance")
+			if distanceLabel then
+				if localPlayerHead then
+					local distance = (localPlayerHead.Position - head.Position).Magnitude
+					distanceLabel.Text = " " .. math.floor(distance + 0.5) .. " m "
+				else
+					distanceLabel.Text = " - m " -- Tampil jika player lokal mati
+				end
+				distanceLabel.TextColor3 = color
+			end
 		else
 			-- Jika karakter tidak ada, hapus ESP
-			removeESP(target) --
+			removeESP(target)
 		end
 	end
 
-	removeESP = function(target) -- <-- [PERBAIKAN 2] Hapus 'local'
+	removeESP = function(target) -- [PERBAIKAN] Hapus 'local'
 		-- 1. Hapus Highlight
 		if target.Character then
 			local highlight = target.Character:FindFirstChild("Yogurutto_ESP_Highlight")
