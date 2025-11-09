@@ -1,95 +1,9 @@
--- ===================================================================
--- [[ AWAL DARI KODE PEMBERSIH (CLEANUP) ]]
--- ===================================================================
+--[[
 
-local function cleanupPreviousInstances()
-    -- 1. Hancurkan UI Utama (WindUI)
-    -- Kita cari berdasarkan nama ScreenGui yang unik
-    local oldGui = game:GetService("CoreGui"):FindFirstChild("__YORUHUB_LITE_MAIN_WINDOW__")
-    if oldGui then
-        pcall(function() oldGui:Destroy() end)
-    end
+    WindUI YoruHub 1.0
     
-    -- 2. Hancurkan ESP Holder
-    local oldEspHolder = game:GetService("CoreGui"):FindFirstChild("YoruHub_ESP_Holder")
-    if oldEspHolder then
-        pcall(function() oldEspHolder:Destroy() end)
-    end
+]]
 
-    -- 3. Hancurkan sisa-sisa di Player
-    local player = game:GetService("Players").LocalPlayer
-    if player and player.Character then
-        local char = player.Character
-        
-        -- Hapus Fly parts
-        if char:FindFirstChild("HumanoidRootPart") then
-            local root = char.HumanoidRootPart
-            local gyro = root:FindFirstChild("YoruHub_FlyGyro")
-            local vel = root:FindFirstChild("YoruHub_FlyVelocity")
-            if gyro then gyro:Destroy() end
-            if vel then vel:Destroy() end
-        end
-        
-        -- Hapus ESP Highlights
-        local highlight = char:FindFirstChild("YoruHub_ESP_Highlight")
-        if highlight then highlight:Destroy() end
-        
-        -- Reset Humanoid state
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then
-            hum.PlatformStand = false
-            hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
-        end
-    end
-    
-    -- 4. Unbind ContextActionService (PENTING untuk Freecam dan jump block)
-    local ContextActionService = game:GetService("ContextActionService")
-    pcall(function() ContextActionService:UnbindAction("FreecamKeyboard") end)
-    pcall(function() ContextActionService:UnbindAction("FreecamMousePan") end)
-    pcall(function() ContextActionService:UnbindAction("FreecamMouseWheel") end)
-    pcall(function() ContextActionService:UnbindAction("FreecamGamepadButton") end)
-    pcall(function() ContextActionService:UnbindAction("FreecamGamepadTrigger") end)
-    pcall(function() ContextActionService:UnbindAction("FreecamGamepadThumbstick") end)
-    pcall(function() ContextActionService:UnbindAction("BlockFreecamJump") end)
-    
-    -- 5. Hancurkan koneksi global (event loops) yang tersisa
-    if getgenv().YoruHub_Connections then
-        for _, conn in ipairs(getgenv().YoruHub_Connections) do
-            pcall(function() conn:Disconnect() end)
-        end
-        getgenv().YoruHub_Connections = nil -- Kosongkan
-    end
-    
-    -- 6. Reset Kamera dan Mouse
-    pcall(function()
-        local Workspace = game:GetService("Workspace")
-        local UserInputService = game:GetService("UserInputService")
-        Workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
-        if player and player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-             Workspace.CurrentCamera.CameraSubject = player.Character.Humanoid
-        end
-        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-        UserInputService.MouseIconEnabled = true
-    end)
-end
-
--- Jalankan pembersihan SEKARANG
-cleanupPreviousInstances()
-
--- Siapkan registry koneksi baru untuk script INI
-getgenv().YoruHub_Connections = {}
-
--- Fungsi helper untuk mendaftarkan koneksi agar bisa dibersihkan nanti
-local function registerConnection(conn)
-    table.insert(getgenv().YoruHub_Connections, conn)
-    return conn
-end
-
--- ===================================================================
--- [[ AKHIR DARI KODE PEMBERSIH ]]
--- ===================================================================
-
---[[ WindUI YoruHub 1.0 ]]
 
 local WindUI
 
@@ -322,7 +236,7 @@ local FreecamModule = (function()
         local v132 = v_u_16:FindFirstChildOfClass("PlayerGui")
         if v132 then
             for _, v133 in pairs(v132:GetChildren()) do
-                if v133:IsA("ScreenGui") and v133.Enabled and v133.Name ~= "TeleportControlGui" and v133.Name ~= "__YORUHUB_LITE_MAIN_WINDOW__" then v_u_127[#v_u_127 + 1] = v133; v133.Enabled = false end
+                if v133:IsA("ScreenGui") and v133.Enabled and v133.Name ~= "TeleportControlGui" then v_u_127[#v_u_127 + 1] = v133; v133.Enabled = false end
             end
         end
         v_u_126 = v_u_17.FieldOfView; v_u_17.FieldOfView = 70; v_u_123 = v_u_17.CameraType; v_u_17.CameraType = Enum.CameraType.Custom
@@ -364,6 +278,9 @@ end)()
 -- ===================================================================
 
 local flyToggle, freecamToggle -- Reference untuk UI toggles
+
+-- Variabel cek R15
+local isR15 = player.Character and player.Character:WaitForChild("Humanoid").RigType == Enum.HumanoidRigType.R15
 
 -- ===================================================================
 -- [[ FITUR FLY ]]
@@ -421,7 +338,7 @@ local function startFly()
                     player.Character:FindFirstChildOfClass("Humanoid").PlatformStand = true
                 end
                 if CONTROL.L + CONTROL.R ~= 0 or CONTROL.F + CONTROL.B ~= 0 or CONTROL.Q + CONTROL.E ~= 0 then
-                    SPEED = flyBaseSpeed
+                    SPEED = flyBaseSpeed -- SAYA UBAH: Menggunakan variabel yang bisa diubah
                 elseif not (CONTROL.L + CONTROL.R ~= 0 or CONTROL.F + CONTROL.B ~= 0 or CONTROL.Q + CONTROL.E ~= 0) and SPEED ~= 0 then
                     SPEED = 0
                 end
@@ -444,8 +361,8 @@ local function startFly()
             SPEED = 0
             
             -- Cleanup
-            if BG and BG.Parent then BG:Destroy() end
-            if BV and BV.Parent then BV:Destroy() end
+            BG:Destroy()
+            BV:Destroy()
             if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
                 player.Character:FindFirstChildOfClass("Humanoid").PlatformStand = false
             end
@@ -453,7 +370,7 @@ local function startFly()
     end
 
     -- Input handlers
-    flyKeyDown = registerConnection(UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    flyKeyDown = UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if gameProcessed then return end
         if not flyEnabled then return end
 
@@ -472,9 +389,9 @@ local function startFly()
             flyControl.E = -flySpeed * 2
         end
         pcall(function() Workspace.CurrentCamera.CameraType = Enum.CameraType.Track end)
-    end))
+    end)
 
-    flyKeyUp = registerConnection(UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    flyKeyUp = UserInputService.InputEnded:Connect(function(input, gameProcessed)
         local KEY = input.KeyCode.Name:lower()
         if KEY == "w" then
             flyControl.F = 0
@@ -489,7 +406,7 @@ local function startFly()
         elseif KEY == "q" then
             flyControl.E = 0
         end
-    end))
+    end)
     
     FLY()
 end
@@ -684,7 +601,7 @@ local function startESP()
     if espEnabled then return end
     espEnabled = true
     
-    espConnection = registerConnection(RunService.Heartbeat:Connect(function()
+    espConnection = RunService.Heartbeat:Connect(function()
         local allPlayers = Players:GetPlayers()
         local activeESPPlayers = {}
 
@@ -708,8 +625,597 @@ local function startESP()
                 end
             end
         end
-    end))
+    end)
 end
+
+-- ===================================================================
+-- [[ FITUR ANIMATION (BARU) - BLOK GABUNGAN ]]
+-- ===================================================================
+
+if isR15 then
+    local HttpService = game:GetService("HttpService")
+
+    local OriginalAnimations = {
+        ["Idle"] = {
+            ["2016 Animation (mm2)"] = {"387947158", "387947464"},
+            ["(UGC) Oh Really?"] = {"98004748982532", "98004748982532"},
+            ["Astronaut"] = {"891621366", "891633237"},
+            ["Adidas Community"] = {"122257458498464", "102357151005774"},
+            ["Bold"] = {"16738333868", "16738334710"},
+            ["(UGC) Slasher"] = {"140051337061095", "140051337061095"},
+            ["(UGC) Retro"] = {"80479383912838", "80479383912838"},
+            ["(UGC) Magician"] = {"139433213852503", "139433213852503"},
+            ["(UGC) John Doe"] = {"72526127498800", "72526127498800"},
+            ["(UGC) Noli"] = {"139360856809483", "139360856809483"},
+            ["(UGC) Coolkid"] = {"95203125292023", "95203125292023"},
+            ["(UGC) Survivor Injured"] = {"73905365652295", "73905365652295"},
+            ["(UGC) Retro Zombie"] = {"90806086002292", "90806086002292"},
+            ["(UGC) 1x1x1x1"] = {"76780522821306", "76780522821306"},
+            ["Borock"] = {"3293641938", "3293642554"},
+            ["Bubbly"] = {"910004836", "910009958"},
+            ["Cartoony"] = {"742637544", "742638445"},
+            ["Confident"] = {"1069977950", "1069987858"},
+            ["Catwalk Glam"] = {"133806214992291","94970088341563"},
+            ["Cowboy"] = {"1014390418", "1014398616"},
+            ["Drooling Zombie"] = {"3489171152", "3489171152"},
+            ["Elder"] = {"10921101664", "10921102574"},
+            ["Ghost"] = {"616006778","616008087"},
+            ["Knight"] = {"657595757", "657568135"},
+            ["Levitation"] = {"616006778", "616008087"},
+            ["Mage"] = {"707742142", "707855907"},
+            ["MrToilet"] = {"4417977954", "4417978624"},
+            ["Ninja"] = {"656117400", "656118341"},
+            ["NFL"] = {"92080889861410", "74451233229259"},
+            ["OldSchool"] = {"10921230744", "10921232093"},
+            ["Patrol"] = {"1149612882", "1150842221"},
+            ["Pirate"] = {"750781874", "750782770"},
+            ["Default Retarget"] = {"95884606664820", "95884606664820"},
+            ["Very Long"] = {"18307781743", "18307781743"},
+            ["Sway"] = {"560832030", "560833564"},
+            ["Popstar"] = {"1212900985", "1150842221"},
+            ["Princess"] = {"941003647", "941013098"},
+            ["R6"] = {"12521158637","12521162526"},
+            ["R15 Reanimated"] = {"4211217646", "4211218409"},
+            ["Realistic"] = {"17172918855", "17173014241"},
+            ["Robot"] = {"616088211", "616089559"},
+            ["Sneaky"] = {"1132473842", "1132477671"},
+            ["Sports (Adidas)"] = {"18537376492", "18537371272"},
+            ["Soldier"] = {"3972151362", "3972151362"},
+            ["Stylish"] = {"616136790", "616138447"},
+            ["Stylized Female"] = {"4708191566", "4708192150"},
+            ["Superhero"] = {"10921288909", "10921290167"},
+            ["Toy"] = {"782841498", "782845736"},
+            ["Udzal"] = {"3303162274", "3303162549"},
+            ["Vampire"] = {"1083445855", "1083450166"},
+            ["Werewolf"] = {"1083195517", "1083214717"},
+            ["Wicked (Popular)"] = {"118832222982049", "76049494037641"},
+            ["No Boundaries (Walmart)"] = {"18747067405", "18747063918"},
+            ["Zombie"] = {"616158929", "616160636"},
+            ["(UGC) Zombie"] = {"77672872857991", "77672872857991"},
+            ["(UGC) TailWag"] = {"129026910898635", "129026910898635"}
+        },
+        ["Walk"] = {
+            ["Gojo"] = "95643163365384",
+            ["Geto"] = "85811471336028",
+            ["Astronaut"] = "891667138",
+            ["(UGC) Zombie"] = "113603435314095",
+            ["Adidas Community"] = "122150855457006",
+            ["Bold"] = "16738340646",
+            ["Bubbly"] = "910034870",
+            ["(UGC) Smooth"] = "76630051272791",
+            ["Cartoony"] = "742640026",
+            ["Confident"] = "1070017263",
+            ["Cowboy"] = "1014421541",
+            ["(UGC) Retro"] = "107806791584829",
+            ["(UGC) Retro Zombie"] = "140703855480494",
+            ["Catwalk Glam"] = "109168724482748",
+            ["Drooling Zombie"] = "3489174223",
+            ["Elder"] = "10921111375",
+            ["Ghost"] = "616013216",
+            ["Knight"] = "10921127095",
+            ["Levitation"] = "616013216",
+            ["Mage"] = "707897309",
+            ["Ninja"] = "656121766",
+            ["NFL"] = "110358958299415",
+            ["OldSchool"] = "10921244891",
+            ["Patrol"] = "1151231493",
+            ["Pirate"] = "750785693",
+            ["Default Retarget"] = "115825677624788",
+            ["Popstar"] = "1212980338",
+            ["Princess"] = "941028902",
+            ["R6"] = "12518152696",
+            ["R15 Reanimated"] = "4211223236",
+            ["2016 Animation (mm2)"] = "387947975",
+            ["Robot"] = "616095330",
+            ["Sneaky"] = "1132510133",
+            ["Sports (Adidas)"] = "18537392113",
+            ["Stylish"] = "616146177",
+            ["Stylized Female"] = "4708193840",
+            ["Superhero"] = "10921298616",
+            ["Toy"] = "782843345",
+            ["Udzal"] = "3303162967",
+            ["Vampire"] = "1083473930",
+            ["Werewolf"] = "1083178339",
+            ["Wicked (Popular)"] = "92072849924640",
+            ["No Boundaries (Walmart)"] = "18747074203",
+            ["Zombie"] = "616168032"
+        },
+        ["Run"] = {
+            ["2016 Animation (mm2)"] = "387947975",
+            ["(UGC) Soccer"] = "116881956670910",
+            ["Adidas Community"] = "82598234841035",
+            ["Astronaut"] = "10921039308",
+            ["Bold"] = "16738337225",
+            ["Bubbly"] = "10921057244",
+            ["Cartoony"] = "10921076136",
+            ["(UGC) Dog"] = "130072963359721",
+            ["Confident"] = "1070001516",
+            ["(UGC) Pride"] = "116462200642360",
+            ["(UGC) Retro"] = "107806791584829",
+            ["(UGC) Retro Zombie"] = "140703855480494", 
+            ["Cowboy"] = "1014401683",
+            ["Catwalk Glam"] = "81024476153754",
+            ["Drooling Zombie"] = "3489173414",
+            ["Elder"] = "10921104374",
+            ["Ghost"] = "616013216",
+            ["Heavy Run (Udzal / Borock)"] = "3236836670",
+            ["Knight"] = "10921121197",
+            ["Levitation"] = "616010382",
+            ["Mage"] = "10921148209",
+            ["MrToilet"] = "4417979645",
+            ["Ninja"] = "656118852",
+            ["NFL"] = "117333533048078",
+            ["OldSchool"] = "10921240218",
+            ["Patrol"] = "1150967949",
+            ["Pirate"] = "750783738",
+            ["Default Retarget"] = "102294264237491",
+            ["Popstar"] = "1212980348",
+            ["Princess"] = "941015281",
+            ["R6"] = "12518152696",
+            ["R15 Reanimated"] = "4211220381",
+            ["Robot"] = "10921250460",
+            ["Sneaky"] = "1132494274",
+            ["Sports (Adidas)"] = "18537384940",
+            ["Stylish"] = "10921276116",
+            ["Stylized Female"] = "4708192705",
+            ["Superhero"] = "10921291831",
+            ["Toy"] = "10921306285",
+            ["Vampire"] = "10921320299",
+            ["Werewolf"] = "10921336997",
+            ["Wicked (Popular)"] = "72301599441680",
+            ["No Boundaries (Walmart)"] = "18747070484",
+            ["Zombie"] = "616163682"
+        },
+        ["Jump"] = {
+            ["Astronaut"] = "891627522",
+            ["Adidas Community"] = "75290611992385",
+            ["Bold"] = "16738336650",
+            ["Bubbly"] = "910016857",
+            ["Cartoony"] = "742637942",
+            ["Catwalk Glam"] = "116936326516985",
+            ["Confident"] = "1069984524",
+            ["Cowboy"] = "1014394726",
+            ["Elder"] = "10921107367",
+            ["Ghost"] = "616008936",
+            ["Knight"] = "910016857",
+            ["Levitation"] = "616008936",
+            ["Mage"] = "10921149743",
+            ["Ninja"] = "656117878",
+            ["NFL"] = "119846112151352",
+            ["OldSchool"] = "10921242013",
+            ["Patrol"] = "1148811837",
+            ["Pirate"] = "750782230",
+            ["(UGC) Retro"] = "139390570947836",
+            ["Default Retarget"] = "117150377950987",
+            ["Popstar"] = "1212954642",
+            ["Princess"] = "941008832",
+            ["Robot"] = "616090535",
+            ["R15 Reanimated"] = "4211219390",
+            ["R6"] = "12520880485",
+            ["Sneaky"] = "1132489853",
+            ["Sports (Adidas)"] = "18537380791",
+            ["Stylish"] = "616139451",
+            ["Stylized Female"] = "4708188025",
+            ["Superhero"] = "10921294559",
+            ["Toy"] = "10921308158",
+            ["Vampire"] = "1083455352",
+            ["Werewolf"] = "1083218792",
+            ["Wicked (Popular)"] = "104325245285198",
+            ["No Boundaries (Walmart)"] = "18747069148",
+            ["Zombie"] = "616161997"
+        },
+        ["Fall"] = {
+            ["Astronaut"] = "891617961",
+            ["Adidas Community"] = "98600215928904",
+            ["Bold"] = "16738333171",
+            ["Bubbly"] = "910001910",
+            ["Cartoony"] = "742637151",
+            ["Catwalk Glam"] = "92294537340807",
+            ["Confident"] = "1069973677",
+            ["Cowboy"] = "1014384571",
+            ["Elder"] = "10921105765",
+            ["Knight"] = "10921122579",
+            ["Levitation"] = "616005863",
+            ["Mage"] = "707829716",
+            ["Ninja"] = "656115606",
+            ["NFL"] = "129773241321032",
+            ["OldSchool"] = "10921241244",
+            ["Patrol"] = "1148863382",
+            ["Pirate"] = "750780242",
+            ["Default Retarget"] = "110205622518029",
+            ["Popstar"] = "1212900995",
+            ["Princess"] = "941000007",
+            ["Robot"] = "616087089",
+            ["R15 Reanimated"] = "4211216152",
+            ["R6"] = "12520972571",
+            ["Sneaky"] = "1132469004",
+            ["Sports (Adidas)"] = "18537367238",
+            ["Stylish"] = "616134815",
+            ["Stylized Female"] = "4708186162",
+            ["Superhero"] = "10921293373",
+            ["Toy"] = "782846423",
+            ["Vampire"] = "1083443587",
+            ["Werewolf"] = "1083189019",
+            ["Wicked (Popular)"] = "121152442762481",
+            ["No Boundaries (Walmart)"] = "18747062535",
+            ["Zombie"] = "616157476"
+        },
+        ["SwimIdle"] = {
+            ["Astronaut"] = "891663592",
+            ["Adidas Community"] = "109346520324160",
+            ["Bold"] = "16738339817",
+            ["Bubbly"] = "910030921",
+            ["Cartoony"] = "10921079380",
+            ["Catwalk Glam"] = "98854111361360",
+            ["Confident"] = "1070012133",
+            ["CowBoy"] = "1014411816",
+            ["Elder"] = "10921110146",
+            ["Mage"] = "707894699",
+            ["Ninja"] = "656118341",
+            ["NFL"] = "79090109939093",
+            ["Patrol"] = "1151221899",
+            ["Knight"] = "10921125935",
+            ["OldSchool"] = "10921244018",
+            ["Levitation"] = "10921139478",
+            ["Popstar"] = "1212998578",
+            ["Princess"] = "941025398",
+            ["Pirate"] = "750785176",
+            ["R6"] = "12518152696",
+            ["Robot"] = "10921253767",
+            ["Sneaky"] = "1132506407",
+            ["Sports (Adidas)"] = "18537387180",
+            ["Stylish"] = "10921281964",
+            ["Stylized"] = "4708190607",
+            ["SuperHero"] = "10921297391",
+            ["Toy"] = "10921310341",
+            ["Vampire"] = "10921325443",
+            ["Werewolf"] = "10921341319",
+            ["Wicked (Popular)"] = "113199415118199",
+            ["No Boundaries (Walmart)"] = "18747071682"
+        },
+        ["Swim"] = {
+            ["Astronaut"] = "891663592",
+            ["Adidas Community"] = "133308483266208",
+            ["Bubbly"] = "910028158",
+            ["Bold"] = "16738339158",
+            ["Cartoony"] = "10921079380",
+            ["Catwalk Glam"] = "134591743181628",
+            ["CowBoy"] = "1014406523",
+            ["Confident"] = "1070009914",
+            ["Elder"] = "10921108971",
+            ["Knight"] = "10921125160",
+            ["Mage"] = "707876443",
+            ["NFL"] = "132697394189921",
+            ["OldSchool"] = "10921243048",
+            ["PopStar"] = "1212998578",
+            ["Princess"] = "941018893",
+            ["Pirate"] = "750784579",
+            ["Patrol"] = "1151204998",
+            ["R6"] = "12518152696",
+            ["Robot"] = "10921253142",
+            ["Levitation"] = "10921138209",
+            ["Stylish"] = "10921281000",
+            ["SuperHero"] = "10921295495",
+            ["Sneaky"] = "1132500520",
+            ["Sports (Adidas)"] = "18537389531",
+            ["Toy"] = "10921309319",
+            ["Vampire"] = "10921324408",
+            ["Werewolf"] = "10921340419",
+            ["Wicked (Popular)"] = "99384245425157",
+            ["No Boundaries (Walmart)"] = "18747073181",
+            ["Zombie"] = "616165109"
+        },
+        ["Climb"] = {
+            ["Astronaut"] = "10921032124",
+            ["Adidas Community"] = "88763136693023",
+            ["Bold"] = "16738332169",
+            ["Cartoony"] = "742636889",
+            ["Catwalk Glam"] = "119377220967554",
+            ["Confident"] = "1069946257",
+            ["CowBoy"] = "1014380606",
+            ["Elder"] = "845392038",
+            ["Ghost"] = "616003713",
+            ["Knight"] = "10921125160",
+            ["Levitation"] = "10921132092",
+            ["Mage"] = "707826056",
+            ["Ninja"] = "656114359",
+            ["(UGC) Retro"] = "121075390792786",
+            ["NFL"] = "134630013742019",
+            ["OldSchool"] = "10921229866",
+            ["Patrol"] = "1148811837",
+            ["Popstar"] = "1213044953",
+            ["Princess"] = "940996062",
+            ["R6"] = "12520982150",
+            ["Reanimated R15"] = "4211214992",
+            ["Robot"] = "616086039",
+            ["Sneaky"] = "1132461372",
+            ["Sports (Adidas)"] = "18537363391",
+            ["Stylish"] = "10921271391",
+            ["Stylized Female"] = "4708184253",
+            ["SuperHero"] = "10921286911",
+            ["Toy"] = "10921300839",
+            ["Vampire"] = "1083439238",
+            ["WereWolf"] = "10921329322",
+            ["Wicked (Popular)"] = "131326830509784",
+            ["No Boundaries (Walmart)"] = "18747060903",
+            ["Zombie"] = "616156119"
+        }
+    }
+    
+    local Animations = OriginalAnimations
+    local lastAnimations = {}
+
+    local function freeze()
+        local player = game:GetService("Players").LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:WaitForChild("Humanoid")
+        humanoid.PlatformStand = true
+        if player and player.Character then
+            task.spawn(function()
+                for i, part in ipairs(player.Character:GetDescendants()) do
+                    if part:IsA("BasePart") and not part.Anchored then
+                        part.Anchored = true
+                    end
+                end
+            end)
+        end
+    end
+    
+    local function unfreeze()
+        local player = game:GetService("Players").LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:WaitForChild("Humanoid")
+        humanoid.PlatformStand = false
+        if player and player.Character then
+            task.spawn(function()
+                for i, part in ipairs(player.Character:GetDescendants()) do
+                    if part:IsA("BasePart") and part.Anchored then
+                        part.Anchored = false
+                    end
+                end
+            end)
+        end
+    end
+
+    local function saveLastAnimations(lasyAnimations)
+        local data = HttpService:JSONEncode(lastAnimations)
+        pcall(function() writefile("MeWhenUrMom.json", data) end)
+    end
+    
+    local function refresh()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:wait(0.1)
+        local humanoid = character:WaitForChild("Humanoid")
+        humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
+    end
+    
+    local function refreshswim()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:wait(0.1)
+        local humanoid = character:WaitForChild("Humanoid")
+        humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+        task.wait(0.1)
+        humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
+    end
+    
+    local function refreshclimb()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:wait(0.1)
+        local humanoid = character:WaitForChild("Humanoid")
+        humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+        task.wait(0.1)
+        humanoid:ChangeState(Enum.HumanoidStateType.Climbing)
+    end
+    
+    local function ResetIdle()
+        local speaker = Players.LocalPlayer
+        local Char = speaker.Character
+        local Hum = Char:FindFirstChildOfClass("Humanoid") or Char:FindFirstChildOfClass("AnimationController")
+        for _, v in next, Hum:GetPlayingAnimationTracks() do v:Stop(0) end
+        pcall(function()
+            local Animate = Char.Animate
+            Animate.idle.Animation1.AnimationId = "http://www.roblox.com/asset/?id=0"
+            Animate.idle.Animation2.AnimationId = "http://www.roblox.com/asset/?id=0"
+        end)
+    end
+    
+    local function ResetWalk()
+        local speaker = Players.LocalPlayer
+        local Char = speaker.Character
+        local Hum = Char:FindFirstChildOfClass("Humanoid") or Char:FindFirstChildOfClass("AnimationController")
+        for _, v in next, Hum:GetPlayingAnimationTracks() do v:Stop(0) end
+        pcall(function()
+            local Animate = Char.Animate
+            Animate.walk.WalkAnim.AnimationId = "http://www.roblox.com/asset/?id=0"
+        end)
+    end
+    
+    local function ResetRun()
+        local speaker = Players.LocalPlayer
+        local Char = speaker.Character
+        local Hum = Char:FindFirstChildOfClass("Humanoid") or Char:FindFirstChildOfClass("AnimationController")
+        for _, v in next, Hum:GetPlayingAnimationTracks() do v:Stop(0) end
+        pcall(function()
+            local Animate = Char.Animate
+            Animate.run.RunAnim.AnimationId = "http://www.roblox.com/asset/?id=0"
+        end)
+    end
+    
+    local function ResetJump()
+        local speaker = Players.LocalPlayer
+        local Char = speaker.Character
+        local Hum = Char:FindFirstChildOfClass("Humanoid") or Char:FindFirstChildOfClass("AnimationController")
+        for _, v in next, Hum:GetPlayingAnimationTracks() do v:Stop(0) end
+        pcall(function()
+            local Animate = Char.Animate
+            Animate.jump.JumpAnim.AnimationId = "http://www.roblox.com/asset/?id=0"
+        end)
+    end
+    
+    local function ResetFall()
+        local speaker = Players.LocalPlayer
+        local Char = speaker.Character
+        local Hum = Char:FindFirstChildOfClass("Humanoid") or Char:FindFirstChildOfClass("AnimationController")
+        for _, v in next, Hum:GetPlayingAnimationTracks() do v:Stop(0) end
+        pcall(function()
+            local Animate = Char.Animate
+            Animate.fall.FallAnim.AnimationId = "http://www.roblox.com/asset/?id=0"
+        end)
+    end
+    
+    local function ResetSwim()
+        local speaker = Players.LocalPlayer
+        local Char = speaker.Character
+        local Hum = Char:FindFirstChildOfClass("Humanoid") or Char:FindFirstChildOfClass("AnimationController")
+        for _, v in next, Hum:GetPlayingAnimationTracks() do v:Stop(0) end
+        pcall(function()
+            local Animate = Char.Animate
+            if Animate.swim then Animate.swim.Swim.AnimationId = "http://www.roblox.com/asset/?id=0" end
+        end)
+    end
+    
+    local function ResetSwimIdle()
+        local speaker = Players.LocalPlayer
+        local Char = speaker.Character
+        local Hum = Char:FindFirstChildOfClass("Humanoid") or Char:FindFirstChildOfClass("AnimationController")
+        for _, v in next, Hum:GetPlayingAnimationTracks() do v:Stop(0) end
+        pcall(function()
+            local Animate = Char.Animate
+            if Animate.swimidle then Animate.swimidle.SwimIdle.AnimationId = "http://www.roblox.com/asset/?id=0" end
+        end)
+    end
+    
+    local function ResetClimb()
+        local speaker = Players.LocalPlayer
+        local Char = speaker.Character
+        local Hum = Char:FindFirstChildOfClass("Humanoid") or Char:FindFirstChildOfClass("AnimationController")
+        for _, v in next, Hum:GetPlayingAnimationTracks() do v:Stop(0) end
+        pcall(function()
+            local Animate = Char.Animate
+            Animate.climb.ClimbAnim.AnimationId = "http://www.roblox.com/asset/?id=0"
+        end)
+    end
+    
+    function setAnimation(animationType, animationId)
+        if type(animationId) ~= "table" and type(animationId) ~= "string" then return end
+        local player = Players.LocalPlayer
+        if not player.Character then return end
+        local Char = player.Character
+        local Animate = Char:FindFirstChild("Animate")
+        if not Animate then return end
+    
+        freeze()
+        wait(0.1)
+    
+        local success, err = pcall(function()
+            if animationType == "Idle" then
+                lastAnimations.Idle = animationId
+                ResetIdle()
+                Animate.idle.Animation1.AnimationId = "http://www.roblox.com/asset/?id=" .. animationId[1]
+                Animate.idle.Animation2.AnimationId = "http://www.roblox.com/asset/?id=" .. animationId[2]
+                refresh()
+            elseif animationType == "Walk" then
+                lastAnimations.Walk = animationId
+                ResetWalk()
+                Animate.walk.WalkAnim.AnimationId = "http://www.roblox.com/asset/?id=" .. animationId
+                refresh()
+            elseif animationType == "Run" then
+                lastAnimations.Run = animationId
+                ResetRun()
+                Animate.run.RunAnim.AnimationId = "http://www.roblox.com/asset/?id=" .. animationId
+                refresh()
+            elseif animationType == "Jump" then
+                lastAnimations.Jump = animationId
+                ResetJump()
+                Animate.jump.JumpAnim.AnimationId = "http://www.roblox.com/asset/?id=" .. animationId
+                refresh()
+            elseif animationType == "Fall" then
+                lastAnimations.Fall = animationId
+                ResetFall()
+                Animate.fall.FallAnim.AnimationId = "http://www.roblox.com/asset/?id=" .. animationId
+                refresh()
+            elseif animationType == "Swim" and Animate:FindFirstChild("swim") then
+                lastAnimations.Swim = animationId
+                ResetSwim()
+                Animate.swim.Swim.AnimationId = "http://www.roblox.com/asset/?id=" .. animationId
+                refreshswim()
+            elseif animationType == "SwimIdle" and Animate:FindFirstChild("swimidle") then
+                lastAnimations.SwimIdle = animationId
+                ResetSwimIdle()
+                Animate.swimidle.SwimIdle.AnimationId = "http://www.roblox.com/asset/?id=" .. animationId
+                refreshswim()
+            elseif animationType == "Climb" then
+                lastAnimations.Climb = animationId
+                ResetClimb()
+                Animate.climb.ClimbAnim.AnimationId = "http://www.roblox.com/asset/?id=" .. animationId
+                refreshclimb()
+            end
+            saveLastAnimations(lastAnimations)
+        end)
+    
+        if not success then
+            warn("Failed to set animation:", err)
+        end
+    
+        wait(0.1)
+        unfreeze()
+    end
+    
+    function loadLastAnimations()
+        if isfile("MeWhenUrMom.json") then
+            local data = readfile("MeWhenUrMom.json")
+            local lastAnimationsData = HttpService:JSONDecode(data)
+            WindUI:Notify({ Title = "Animasi", Content = "Menyiapkan animasi tersimpan...", Icon = "play", Duration = 3 })
+            if lastAnimationsData.Idle then setAnimation("Idle", lastAnimationsData.Idle) end
+            if lastAnimationsData.Walk then setAnimation("Walk", lastAnimationsData.Walk) end
+            if lastAnimationsData.Run then setAnimation("Run", lastAnimationsData.Run) end
+            if lastAnimationsData.Jump then setAnimation("Jump", lastAnimationsData.Jump) end
+            if lastAnimationsData.Fall then setAnimation("Fall", lastAnimationsData.Fall) end
+            if lastAnimationsData.Climb then setAnimation("Climb", lastAnimationsData.Climb) end
+            if lastAnimationsData.Swim then setAnimation("Swim", lastAnimationsData.Swim) end
+            if lastAnimationsData.SwimIdle then setAnimation("SwimIdle", lastAnimationsData.SwimIdle) end
+        else
+            WindUI:Notify({ Title = "Animasi", Content = "Tidak ada animasi tersimpan.", Duration = 5 })
+        end
+    end
+    
+    Players.LocalPlayer.CharacterAdded:Connect(function(character)
+        local hum = character:WaitForChild("Humanoid")
+        local animate = character:WaitForChild("Animate", 10)
+        if not animate then
+            WindUI:Notify({ Title = "Error", Content = "Script 'Animate' tidak ditemukan setelah respawn!", Duration = 5 })
+            return
+        end
+    
+        if lastAnimations.Idle then setAnimation("Idle", lastAnimations.Idle) end
+        if lastAnimations.Walk then setAnimation("Walk", lastAnimations.Walk) end
+        if lastAnimations.Run then setAnimation("Run", lastAnimations.Run) end
+        if lastAnimations.Jump then setAnimation("Jump", lastAnimations.Jump) end
+        if lastAnimations.Fall then setAnimation("Fall", lastAnimations.Fall) end
+        if lastAnimations.Climb then setAnimation("Climb", lastAnimations.Climb) end
+        if lastAnimations.Swim then setAnimation("Swim", lastAnimations.Swim) end
+        if lastAnimations.SwimIdle then setAnimation("SwimIdle", lastAnimations.SwimIdle) end
+    end)
 
 -- ===================================================================
 -- [[ FUNGSI TOGGLE UNTUK UI ]]
@@ -839,7 +1345,7 @@ local function handleGlobalInput(input, gameProcessed)
 end
 
 -- Daftarkan event listener untuk input global
-registerConnection(UserInputService.InputBegan:Connect(handleGlobalInput))
+UserInputService.InputBegan:Connect(handleGlobalInput)
 
 -- ===================================================================
 -- [[ KODE UNTUK FLING ]]
@@ -1021,11 +1527,6 @@ local noclipConnection
 local godModeEnabled = false
 local godModeConnection
 
--- Kill Aura
-local killAuraEnabled = false
-local killAuraConnection = nil
-local killAuraRange = 15 -- Jarak default
-
 -- ===================================================================
 -- [[ FUNGSI PLAYER FEATURES ]]
 -- ===================================================================
@@ -1034,7 +1535,7 @@ local killAuraRange = 15 -- Jarak default
 local function toggleInfiniteJump(state)
     infiniteJumpEnabled = state
     if state then
-        infiniteJumpConnection = registerConnection(UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        infiniteJumpConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
             if gameProcessed then return end
             if input.KeyCode == Enum.KeyCode.Space then
                 if infiniteJumpEnabled and player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
@@ -1044,7 +1545,7 @@ local function toggleInfiniteJump(state)
                     end
                 end
             end
-        end))
+        end)
     WindUI:Notify({ Title = "Infinite Jump", Content = "Infinite Jump enabled" })
     else
         if infiniteJumpConnection then
@@ -1067,7 +1568,7 @@ local function toggleNoclip(state)
         end
 
         -- Ini adalah loop yang memaksa noclip
-        noclipConnection = registerConnection(RunService.Stepped:Connect(function()
+        noclipConnection = RunService.Stepped:Connect(function()
             if noclipEnabled and player.Character then
                 for _, part in pairs(player.Character:GetDescendants()) do
                     if part:IsA("BasePart") then
@@ -1077,7 +1578,7 @@ local function toggleNoclip(state)
                     end
                 end
             end
-        end))
+        end)
         WindUI:Notify({ Title = "Noclip", Content = "Noclip enabled" })
 
     else
@@ -1108,202 +1609,31 @@ local function toggleNoclip(state)
     end
 end
 
--- [[ FUNGSI BARU UNTUK INVISIBILITY ]]
-
-local invisibilityEnabled = false
-local invisibilityConnection = nil
-
--- Fungsi untuk mereset transparansi karakter ke default
-local function resetCharacterTransparency()
-    if not player.Character then return end
-    local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-    if humanoid then
-        humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
-    end
-
-    for _, part in pairs(player.Character:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.Transparency = 0 -- Kembali terlihat
-        elseif part:IsA("Decal") then
-            part.Transparency = 0 -- Tampilkan decals (wajah, dll)
-        end
-    end
-    
-    -- Kembalikan aksesoris
-    for _, accessory in pairs(player.Character:GetChildren()) do
-        if accessory:IsA("Accessory") then
-            local handle = accessory:FindFirstChild("Handle")
-            if handle then
-                handle.Transparency = 0
-            end
-        end
-    end
-end
-
--- Invisibility Function (HANYA VISUAL)
-local function toggleInvisibility(state)
-    invisibilityEnabled = state
-    
-    if state then
-        -- Invisibility ON
-        if invisibilityConnection then invisibilityConnection:Disconnect() end
-
-        invisibilityConnection = registerConnection(RunService.Stepped:Connect(function()
-            if invisibilityEnabled and player.Character then
-                local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None -- Sembunyikan nametag
-                end
-
-                for _, part in pairs(player.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.Transparency = 1 -- Tembus pandang
-                    elseif part:IsA("Decal") then
-                        part.Transparency = 1 -- Sembunyikan wajah, dll
-                    end
-                end
-                
-                -- Sembunyikan aksesoris
-                for _, accessory in pairs(player.Character:GetChildren()) do
-                    if accessory:IsA("Accessory") then
-                        local handle = accessory:FindFirstChild("Handle")
-                        if handle then
-                            handle.Transparency = 1
-                        end
-                    end
-                end
-            end
-        end))
-        -- (Notifikasi akan ditangani oleh tombol Ghost Mode)
-
-    else
-        -- Invisibility OFF
-        if invisibilityConnection then
-            invisibilityConnection:Disconnect()
-            invisibilityConnection = nil
-        end
-        
-        -- Kembalikan tampilan
-        resetCharacterTransparency()
-    end
-end
-
-local originalMaxHealth = nil
-
--- God Mode Function (Manual Toggle) - V3 (Mencoba blokir state mati)
+-- God Mode Function (Manual Toggle)
 local function toggleGodMode(state)
     godModeEnabled = state
     local character = player.Character
     if not character or not character:FindFirstChild("Humanoid") then return end
     
     local humanoid = character.Humanoid
-    
     if state then
-        -- God Mode ON
-        if originalMaxHealth == nil then
-            originalMaxHealth = humanoid.MaxHealth -- Simpan MaxHealth asli
-        end
-        
-        -- 1. Coba disable state 'Dead'
-        -- Ini adalah bagian terpenting
-        pcall(function()
-            humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-        end)
-        
-        -- 2. Set MaxHealth (untuk visual UI)
-        humanoid.MaxHealth = math.huge
         humanoid.Health = humanoid.MaxHealth
-        
         if godModeConnection then godModeConnection:Disconnect() end
-        
-        -- 3. Koneksi untuk mengisi darah (sebagai backup)
-        godModeConnection = registerConnection(humanoid.HealthChanged:Connect(function(damage)
-            if godModeEnabled and humanoid.Health < humanoid.MaxHealth then
-                task.wait() 
+        godModeConnection = humanoid.HealthChanged:Connect(function()
+            if godModeEnabled then
                 humanoid.Health = humanoid.MaxHealth
+            else
+                if godModeConnection then
+                    godModeConnection:Disconnect()
+                    godModeConnection = nil
+                end
             end
-        end))
-        WindUI:Notify({ Title = "God Mode", Content = "God Mode (Blokir Kematian) diaktifkan" })
-        
+        end)
     else
-        -- God Mode OFF
         if godModeConnection then
             godModeConnection:Disconnect()
             godModeConnection = nil
         end
-        
-        -- 1. Kembalikan state 'Dead'
-        pcall(function()
-            humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
-        end)
-        
-        -- 2. Kembalikan MaxHealth
-        if originalMaxHealth ~= nil then
-            humanoid.MaxHealth = originalMaxHealth
-            -- Set health ke max asli, jangan biarkan tak terhingga
-            if humanoid.Health > originalMaxHealth then
-                 humanoid.Health = originalMaxHealth
-            end
-            originalMaxHealth = nil
-        end
-        WindUI:Notify({ Title = "God Mode", Content = "God Mode (Blokir Kematian) dinonaktifkan" })
-    end
-end
-
--- Kill Aura Function
-local function toggleKillAura(state)
-    killAuraEnabled = state
-    
-    if state then
-        -- Hapus koneksi lama jika ada
-        if killAuraConnection then killAuraConnection:Disconnect() end
-        
-        killAuraConnection = registerConnection(RunService.Heartbeat:Connect(function()
-            if not killAuraEnabled or not player.Character then return end
-            
-            local localChar = player.Character
-            local tool = localChar:FindFirstChildOfClass("Tool")
-            local handle = tool and tool:FindFirstChild("Handle")
-            
-            -- Membutuhkan tool (misal: pedang) yang sedang dipegang
-            if not handle then return end 
-            
-            for _, targetPlayer in ipairs(Players:GetPlayers()) do
-                if targetPlayer ~= player then
-                    local targetChar = targetPlayer.Character
-                    local targetHRP = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
-                    local targetHumanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
-                    
-                    -- Periksa jika target valid dan hidup
-                    if targetHRP and targetHumanoid and targetHumanoid.Health > 0 then
-                        
-                        -- Cek jarak
-                        local distance = (localChar:GetPrimaryPartCFrame().Position - targetHRP.Position).Magnitude
-                        
-                        if distance <= killAuraRange then
-                            -- Loop semua bagian tubuh target
-                            for _, targetPart in ipairs(targetChar:GetChildren()) do
-                                if targetPart:IsA("BasePart") then
-                                    -- 'Sentuh' target dari jauh tanpa tool:Activate()
-                                    -- Ini akan mendaftarkan damage tanpa membuat Anda lunge/teleport
-                                    pcall(function()
-                                        firetouchinterest(handle, targetPart, 0) -- Touch start
-                                        firetouchinterest(handle, targetPart, 1) -- Touch end
-                                    end)
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end))
-        WindUI:Notify({ Title = "Kill Aura", Content = "Kill Aura enabled" })
-    else
-        if killAuraConnection then
-            killAuraConnection:Disconnect()
-            killAuraConnection = nil
-        end
-        WindUI:Notify({ Title = "Kill Aura", Content = "Kill Aura disabled" })
     end
 end
 
@@ -1357,15 +1687,18 @@ local Window = WindUI:CreateWindow({
     }
 })
 
--- !! MEMBERI NAMA UNIK PADA UI UNTUK CLEANUP !!
-Window.Name = "__YORUHUB_LITE_MAIN_WINDOW__"
-
 WindUI:Notify({
     Title = "YoruHub",
     Content = "Script Berhasil dijalankan...",
     Duration = 5,
     Icon = "badge-check",
 })
+
+-- Panggil notifikasi R15 di sini, setelah Window dibuat
+if not isR15 then
+    WindUI:Notify({Title = "Animation", Content = "Fitur animasi dilompati (Hanya R15)", Duration = 7})
+end
+
 
 -- */  Theme  /* --
 do
@@ -1401,17 +1734,69 @@ do
 end
 
 -- ===================================================================
--- [[ TAB 2: PLAYER ]]
+-- [[ TAB 1: INFORMATION ]]
 -- ===================================================================
 
+local InfoTab = Window:Tab({
+    Title = "Information",
+    Icon = "info",
+})
+
 Window:Divider()
+
+-- About YoruHub
+InfoTab:Section({
+    Title = "About YoruHub",
+})
+
+InfoTab:Paragraph({
+    Title = "YoruHub v1.0",
+    Desc = "A custom hub for Roblox exploits. Built with WindUI. Features auto-teleport, player tools, and more.",
+})
+
+-- Discord Server
+InfoTab:Section({
+    Title = "Discord Server",
+})
+
+InfoTab:Paragraph({
+    Title = "Join Discord",
+    Desc = "Bergabunglah dengan komunitas kami untuk update dan support.",
+    Buttons = {
+        {
+            Title = "Copy Link Discord",
+            Icon = "link",
+            Callback = function()
+                setclipboard("https://discord.gg/your-invite")
+                WindUI:Notify({Title = "Discord", Content = "Link copied!"})
+            end
+        }
+    }
+})
+
+-- Changelog
+InfoTab:Section({
+    Title = "Changelog",
+})
+
+InfoTab:Paragraph({
+    Title = "v1.0 - Initial Release",
+    Desc = [[
+• Player management features
+• Movement controls
+• ESP and visibility options
+• Config save/load system ]]
+})
+
+
+-- ===================================================================
+-- [[ TAB 2: PLAYER ]]
+-- ===================================================================
 
 local PlayerTab = Window:Tab({
     Title = "Player",
     Icon = "user",
 })
-
-Window:Divider()
 
 -- Controls Section yang lebih rapi
 PlayerTab:Section({
@@ -1434,11 +1819,12 @@ PlayerTab:Section({
 local defaultWalkspeed = 16
 local defaultJumpPower = 50
 local defaultGravity = Workspace.Gravity
+local defaultFlySpeed = 50 
 
 local walkspeedSlider = PlayerTab:Slider({
     Title = "WalkSpeed",
     Step = 1,
-    Value = { Min = 1, Max = 100, Default = defaultWalkspeed },
+    Value = { Min = 1, Max = 500, Default = defaultWalkspeed },
     Callback = function(value)
         if player.Character and player.Character:FindFirstChild("Humanoid") then
             player.Character.Humanoid.WalkSpeed = value
@@ -1466,6 +1852,16 @@ local gravitySlider = PlayerTab:Slider({
     end
 })
 
+-- SAYA TAMBAHKAN: Slider untuk Fly Speed
+local flySpeedSlider = PlayerTab:Slider({
+    Title = "Fly Speed",
+    Step = 1,
+    Value = { Min = 1, Max = 500, Default = defaultFlySpeed },
+    Callback = function(value)
+        flyBaseSpeed = value -- Memperbarui variabel global flyBaseSpeed
+    end
+})
+
 PlayerTab:Button({
     Title = "Reset to Default",
     Callback = function()
@@ -1474,10 +1870,15 @@ PlayerTab:Button({
             player.Character.Humanoid.JumpPower = defaultJumpPower
         end
         Workspace.Gravity = defaultGravity
+        flyBaseSpeed = defaultFlySpeed -- SAYA TAMBAHKAN: Reset logika fly speed
+        
         walkspeedSlider:Set(defaultWalkspeed)
         jumpSlider:Set(defaultJumpPower)
         gravitySlider:Set(defaultGravity)
-        WindUI:Notify({ Title = "Reset", Content = "Walkspeed, Jump, dan Gravity direset" })
+        flySpeedSlider:Set(defaultFlySpeed) -- SAYA TAMBAHKAN: Reset UI slider fly speed
+        
+        -- SAYA UBAH: Notifikasi diperbarui
+        WindUI:Notify({ Title = "Reset", Content = "Walkspeed, Jump, Gravity, dan Fly Speed direset" })
     end
 })
 
@@ -1521,25 +1922,6 @@ PlayerTab:Toggle({
     end
 })
 
--- [[ PENGGANTI GOD MODE ]]
-PlayerTab:Toggle({
-    Title = "Ghost Mode",
-    Desc = "Menjadi tembus pandang DAN tembus benda",
-    Default = false,
-    Callback = function(state)
-        -- Panggil KEDUA fungsi untuk mode hantu
-        toggleInvisibility(state) -- Fungsi baru untuk visual
-        toggleNoclip(state)     -- Fungsi lama untuk tabrakan
-
-        -- Beri notifikasi gabungan
-        if state then
-            WindUI:Notify({ Title = "Ghost Mode", Content = "Ghost Mode diaktifkan" })
-        else
-            WindUI:Notify({ Title = "Ghost Mode", Content = "Ghost Mode dinonaktifkan" })
-        end
-    end
-})
-
 -- Freecam Toggle  
 freecamToggle = PlayerTab:Toggle({
     Title = "FreeCam", 
@@ -1573,25 +1955,6 @@ PlayerTab:Button({
     end
 })
 
-PlayerTab:Slider({
-    Title = "Kill Aura Range",
-    Step = 1,
-    Value = { Min = 5, Max = 100, Default = 15 },
-    Callback = function(value)
-        killAuraRange = value
-        WindUI:Notify({ Title = "Kill Aura", Content = "Range set to " .. value })
-    end
-})
-
-PlayerTab:Toggle({
-    Title = "Kill Aura",
-    Desc = "Otomatis menyerang pemain (membutuhkan tool)",
-    Default = false,
-    Callback = function(state)
-        toggleKillAura(state)
-    end
-})
-
 -- ===================================================================
 -- [[ TAB 3: FITUR TROLLING ]]
 -- ===================================================================
@@ -1600,8 +1963,6 @@ local TrollingTab = Window:Tab({
     Title = "Trolling",
     Icon = "skull",
 })
-
-Window:Divider()
 
 -- Trolling Section
 TrollingTab:Section({
@@ -1693,7 +2054,6 @@ TrollingTab:Button({
         end
         
         flingDebounce = true
-        -- stopAllAutoTeleports() -- Fungsi ini tidak ada di skrip Anda, saya komentari
         WindUI:Notify({ Title = "Fling", Content = "Flinging " .. selectedPlayer.Name })
         
         task.spawn(function()
@@ -1707,6 +2067,101 @@ TrollingTab:Button({
 })
 
 -- ===================================================================
+-- [[ TAB 4: ANIMATION ]]
+-- ===================================================================
+
+local AnimationTab = Window:Tab({
+    Title = "Animation",
+    Icon = "play",
+})
+
+-- Info section
+AnimationTab:Section({
+    Title = "Information",
+})
+
+AnimationTab:Paragraph({
+    Title = "Animation System",
+    Desc = "Sistem animasi pack khusus karakter R15. Animasi akan otomatis diterapkan saat memilih list dari dropdown."
+})
+
+AnimationTab:Section({ 
+    Title = "Animation Pack Control" 
+})
+
+    -- Helper untuk membuat list nama animasi
+    local function getAnimationNames(animType)
+        local names = {}
+        if Animations[animType] then
+            for name, _ in pairs(Animations[animType]) do
+                table.insert(names, name)
+            end
+        end
+        table.sort(names)
+        return names
+    end
+
+    local animationTypes = {"Idle", "Walk", "Run", "Jump", "Fall", "Swim", "SwimIdle", "Climb"}
+    local dropdowns = {}
+
+    for _, animType in ipairs(animationTypes) do
+        local animNames = getAnimationNames(animType)
+        
+        dropdowns[animType] = AnimationTab:Dropdown({
+            Title = animType,
+            Values = animNames,
+            Callback = function(selectedName)
+                local animId = Animations[animType][selectedName]
+                if animId then
+                    task.spawn(function()
+                        setAnimation(animType, animId)
+                        WindUI:Notify({ Title = "Animation Set", Content = animType .. " changed to " .. selectedName, Duration = 3 })
+                    end)
+                end
+            end
+        })
+    end
+
+    AnimationTab:Button({
+        Title = "Reset All Animations (Respawn)",
+        Desc = "Menghapus semua animasi",
+        Icon = "refresh-cw",
+        Callback = function()
+            task.spawn(function()
+                -- Hentikan animasi saat ini
+                ResetIdle()
+                ResetWalk()
+                ResetRun()
+                ResetJump()
+                ResetFall()
+                ResetSwim()
+                ResetSwimIdle()
+                ResetClimb()
+                
+                -- Hapus data tersimpan
+                lastAnimations = {}
+                saveLastAnimations(lastAnimations)
+                
+                WindUI:Notify({ Title = "Reset", Content = "Semua animasi dihapus. Me-respawn karakter..." })
+
+                -- Tambahkan jeda singkat agar notifikasi terlihat
+                task.wait(0.5) 
+                
+                -- Fitur respawn
+                if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+                    player.Character:FindFirstChildOfClass("Humanoid").Health = 0
+                end
+            end)
+        end
+    })
+
+    -- Panggil loadLastAnimations di dalam blok R15
+    task.wait(1) -- Beri waktu agar game memuat
+    loadLastAnimations()
+
+end -- Akhir dari 'if isR15' (Blok Tunggal)
+
+-- ===================================================================
 -- [[ TAB 5: FITUR COPY AVATAR ]]
 -- ===================================================================
 
@@ -1714,8 +2169,6 @@ local MorphingTab = Window:Tab({
     Title = "Copy Avatar",
     Icon = "users",
 })
-
-Window:Divider()
 
 MorphingTab:Paragraph({
     Title = "Peringatan!",
@@ -1726,18 +2179,27 @@ MorphingTab:Paragraph({
 MorphingTab:Divider()
 MorphingTab:Space()
 
--- local selectedPlayer = nil -- Sudah didefinisikan di tab Trolling
--- local playerDropdown = nil -- Sudah didefinisikan di tab Trolling
--- local searchInput = nil -- Sudah didefinisikan di tab Trolling
--- local isRefreshingDropdown = false -- Sudah didefinisikan di tab Trolling
+local selectedPlayer = nil
+local playerDropdown = nil
+local searchInput = nil
+local isRefreshingDropdown = false
 
--- Kita perlu variabel baru agar tidak konflik dengan tab Trolling
-local morphSelectedPlayer = nil
-local morphPlayerDropdown = nil
-local morphSearchInput = nil
-local morphIsRefreshing = false
+local function getPlayerList()
+    local playerList = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= player then 
+            table.insert(playerList, {
+                Title = p.Name,
+                Icon = "user",
+                PlayerObject = p
+            })
+        end
+    end
+    table.sort(playerList, function(a, b) return a.Title < b.Title end)
+    return playerList
+end
 
-morphSearchInput = MorphingTab:Input({
+searchInput = MorphingTab:Input({
     Title = "Search Player",
     Icon = "search",
     Placeholder = "Search...",
@@ -1753,20 +2215,20 @@ morphSearchInput = MorphingTab:Input({
             end
         end
         
-        morphIsRefreshing = true
-        morphPlayerDropdown:Refresh(filteredList)
-        morphSelectedPlayer = nil
-        morphIsRefreshing = false
+        isRefreshingDropdown = true
+        playerDropdown:Refresh(filteredList)
+        selectedPlayer = nil
+        isRefreshingDropdown = false
     end
 })
 
-morphPlayerDropdown = MorphingTab:Dropdown({
+playerDropdown = MorphingTab:Dropdown({
     Title = "Select Player",
     Values = getPlayerList(),
     Callback = function(option)
         if option.PlayerObject and option.PlayerObject.Parent then
-            morphSelectedPlayer = option.PlayerObject
-            if not morphIsRefreshing then
+            selectedPlayer = option.PlayerObject
+            if not isRefreshingDropdown then
                 WindUI:Notify({ Title = "Player", Content = "Selected " .. option.Title })
             end
         end
@@ -1777,12 +2239,12 @@ MorphingTab:Button({
     Title = "Refresh Player List",
     Icon = "refresh-cw",
     Callback = function()
-        morphIsRefreshing = true
-        morphPlayerDropdown:Refresh(getPlayerList())
-        if morphSearchInput then morphSearchInput:Set("", true) end
-        morphSelectedPlayer = nil
+        isRefreshingDropdown = true
+        playerDropdown:Refresh(getPlayerList())
+        if searchInput then searchInput:Set("", true) end
+        selectedPlayer = nil
         WindUI:Notify({ Title = "Player", Content = "List refreshed" })
-        morphIsRefreshing = false
+        isRefreshingDropdown = false
     end
 })
 
@@ -1790,13 +2252,13 @@ MorphingTab:Button({
     Title = "Salin Avatar Target Saat Ini",
     Icon = "copy",
     Callback = function()
-        if not morphSelectedPlayer or not morphSelectedPlayer.Character then
+        if not selectedPlayer or not selectedPlayer.Character then
             WindUI:Notify({ Title = "Error", Content = "Pilih pemain yang valid dari dropdown di atas!" })
             return
         end
 
-        local targetCharacter = morphSelectedPlayer.Character
-        local targetName = morphSelectedPlayer.Name
+        local targetCharacter = selectedPlayer.Character
+        local targetName = selectedPlayer.Name
         
         task.spawn(function()
             WindUI:Notify({ Title = "Debug (1/3)", Content = "Memulai proses copy avatar untuk " .. targetName .. "..." })
@@ -1939,14 +2401,14 @@ MorphingTab:Button({
     Title = "Salin Avatar Target yang Asli",
     Icon = "copy",
     Callback = function()
-        -- Menggunakan variabel 'morphSelectedPlayer'
-        if not morphSelectedPlayer or not morphSelectedPlayer.Character then
+        -- Menggunakan variabel 'selectedPlayer' yang sama dari bagian Trolling
+        if not selectedPlayer or not selectedPlayer.Character then
             WindUI:Notify({ Title = "Error", Content = "Pilih pemain yang valid dari dropdown di atas!" })
             return
         end
 
-        local targetUserId = morphSelectedPlayer.UserId
-        local targetName = morphSelectedPlayer.Name
+        local targetUserId = selectedPlayer.UserId
+        local targetName = selectedPlayer.Name
         
         task.spawn(function()
             WindUI:Notify({ Title = "Debug (1/4)", Content = "Memulai pengambilan data untuk " .. targetName .. " (bisa lambat)..." })
@@ -2197,8 +2659,6 @@ local TeleportTab = Window:Tab({
     Icon = "navigation",
 })
 
-Window:Divider()
-
 -- Teleport Player Section
 TeleportTab:Section({
     Title = "Teleport Player",
@@ -2271,8 +2731,7 @@ TeleportTab:Button({
     Title = "Teleport to Player",
     Icon = "navigation",
     Callback = function()
-        if tpSelectedPlayer and tpSelectedPlayer.Character and tpSelectedPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            -- stopAllAutoTeleports() -- Fungsi ini tidak ada di skrip Anda, saya komentari
+        if tpSelectedPlayer and tpSelectedPlayer.Character then tpSelectedPlayer.Character:FindFirstChild("HumanoidRootPart")
             local targetPos = tpSelectedPlayer.Character.HumanoidRootPart.CFrame
             teleportCharacter(player.Character, targetPos.Position + Vector3.new(0, 3, 0))
             WindUI:Notify({ Title = "Teleport", Content = "Teleported to " .. tpSelectedPlayer.Name })
@@ -2321,9 +2780,19 @@ local SettingTab = Window:Tab({
 
 Window:Divider()
 
--- Rendering Section
+-- Theme Section
 SettingTab:Section({
-    Title = "GUI",
+    Title = "Theme",
+})
+
+SettingTab:Dropdown({
+    Title = "UI Theme",
+    Values = {"Dark", "Light", "Stylish"},
+    Value = "Dark",
+    Callback = function(theme)
+        WindUI:SetTheme(theme)
+        WindUI:Notify({ Title = "Theme", Icon = "palette", Content = "Theme changed to " .. theme })
+    end
 })
 
 SettingTab:Keybind({
@@ -2337,48 +2806,99 @@ SettingTab:Keybind({
     end
 })
 
--- Rendering Section
+-- Config Section
 SettingTab:Section({
-    Title = "Rendering",
+    Title = "Config",
 })
 
-SettingTab:Toggle({
-    Title = "FPS Boost",
-    Desc = "Reduce rendering quality for better FPS",
-    Default = false,
-    Callback = function(state)
-        local settings = settings()
-        if state then
-            settings.Rendering.QualityLevel = Enum.QualityLevel.Level01
-            for _, v in pairs(game:GetDescendants()) do
-                if v:IsA("ParticleEmitter") or v:IsA("Trail") then
-                    v.Enabled = false
-                end
-            end
-            WindUI:Notify({ Title = "FPS Boost", Content = "FPS Boost enabled" })
-        else
-            settings.Rendering.QualityLevel = Enum.QualityLevel.Automatic
-            for _, v in pairs(game:GetDescendants()) do
-                if v:IsA("ParticleEmitter") or v:IsA("Trail") then
-                    v.Enabled = true
-                end
-            end
-            WindUI:Notify({ Title = "FPS Boost", Content = "FPS Boost disabled" })
+local ConfigManager = Window.ConfigManager
+local ConfigName = "default"
+
+local ConfigNameInput = SettingTab:Input({
+    Title = "Config Name",
+    Icon = "file-cog",
+    Value = ConfigName,
+    Callback = function(value)
+        ConfigName = value
+    end
+})
+
+local AllConfigs = ConfigManager:AllConfigs()
+local DefaultValue = table.find(AllConfigs, ConfigName) and ConfigName or nil
+
+local ConfigDropdown = SettingTab:Dropdown({
+    Title = "All Configs",
+    Values = AllConfigs,
+    Value = DefaultValue,
+    Callback = function(value)
+        ConfigName = value
+        ConfigNameInput:Set(value)
+    end
+})
+
+SettingTab:Button({
+    Title = "Refresh Config List",
+    Icon = "refresh-cw",
+    Callback = function()
+        local newConfigs = ConfigManager:AllConfigs()
+        ConfigDropdown:Refresh(newConfigs)
+        WindUI:Notify({ Title = "Config", Content = "Config list refreshed" })
+    end
+})
+
+SettingTab:Space()
+
+SettingTab:Button({
+    Title = "Save Config",
+    Icon = "save",
+    Callback = function()
+        Window.CurrentConfig = ConfigManager:CreateConfig(ConfigName)
+        if Window.CurrentConfig:Save() then
+            WindUI:Notify({
+                Title = "Config Saved",
+                Content = "Config '" .. ConfigName .. "' saved",
+            })
+            local newConfigs = ConfigManager:AllConfigs()
+            ConfigDropdown:Refresh(newConfigs)
+            ConfigDropdown:Set(ConfigName)
         end
     end
 })
 
-SettingTab:Toggle({
-    Title = "Disable 3D Rendering",
-    Desc = "Only show UI (extreme FPS boost)",
-    Default = false,
-    Callback = function(state)
-        if state then
-            RunService:Set3dRenderingEnabled(false)
-            WindUI:Notify({ Title = "Rendering", Content = "3D rendering disabled" })
+SettingTab:Button({
+    Title = "Load Config",
+    Icon = "folder-open",
+    Callback = function()
+        Window.CurrentConfig = ConfigManager:CreateConfig(ConfigName)
+        if Window.CurrentConfig:Load() then
+            WindUI:Notify({
+                Title = "Config Loaded",
+                Content = "Config '" .. ConfigName .. "' loaded",
+            })
+        end
+    end
+})
+
+SettingTab:Button({
+    Title = "Delete Config",
+    Icon = "trash-2",
+    Color = Color3.fromHex("#ff4830"),
+    Callback = function()
+        if ConfigManager:DeleteConfig(ConfigName) then
+            WindUI:Notify({
+                Title = "Config Deleted",
+                Content = "Config '" .. ConfigName .. "' deleted",
+            })
+            local newConfigs = ConfigManager:AllConfigs()
+            ConfigDropdown:Refresh(newConfigs)
+            ConfigName = "default"
+            ConfigNameInput:Set(ConfigName)
+            ConfigDropdown:Set(nil)
         else
-            RunService:Set3dRenderingEnabled(true)
-            WindUI:Notify({ Title = "Rendering", Content = "3D rendering enabled" })
+            WindUI:Notify({
+                Title = "Error",
+                Content = "Cannot delete config '" .. ConfigName .. "'",
+            })
         end
     end
 })
