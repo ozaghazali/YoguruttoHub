@@ -2000,3 +2000,40 @@
                 })
             end
         ]]-- Akhir dari emoteScriptString
+        
+        -- Cek flag global dari skrip emote itu sendiri
+        if _G.EmotesGUIRunning then
+            WindUI:Notify({
+                Title = "Emotes", 
+                Content = "Emote system is already running!", 
+                Duration = 5
+            })
+            return
+        end
+        
+        -- Muat dan jalankan skrip emote
+        local func, err = loadstring(emoteScriptString)
+        
+        if func then
+            task.spawn(function()
+                local success, pcall_err = pcall(func)
+                if not success then
+                    WindUI:Notify({
+                        Title = "Emote Script Error", 
+                        Content = "Error during execution: " .. tostring(pcall_err), 
+                        Duration = 10
+                    })
+                end
+            end)
+            WindUI:Notify({
+                Title = "Emotes", 
+                Content = "Custom Emote Menu is loading...", 
+                Duration = 5
+            })
+        else
+            WindUI:Notify({
+                Title = "Emote Load Error", 
+                Content = "Failed to load script: " .. tostring(err), 
+                Duration = 10
+            })
+        end
